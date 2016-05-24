@@ -15,3 +15,18 @@ mno:
 tenant:
   id: {{ mnohub_config.default_tenant.id }}
   key: {{ mnohub_config.default_tenant.key }}
+
+{% if frontend_config.frontend_hosts is defined %}
+frontend_host:
+{% for country in frontend_config.frontend_hosts %}
+  {{ country }}: {{ frontend_config.frontend_hosts[country] }}
+{% endfor %}
+{% endif %}
+
+{% if frontend_config.google_apps is defined %}
+google_apps: {{ frontend_config.google_apps }}
+{% endif %}
+
+{% if frontend_config.aws_config is defined %}
+aws_config: {{ frontend_config.aws_config }}
+{% endif %}

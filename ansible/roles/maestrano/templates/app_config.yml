@@ -51,7 +51,7 @@
     token: <%= ENV['zendesk_token'] %>
 # Billing currencies
 {% if mnohub_config.billing is defined %}
-  billing_currencies: {{ mnohub_config.billing.currencies }}
+  billing_currencies: {{ mnohub_config.billing.currencies | to_nice_json }}
   default_billing_currency: {{ mnohub_config.billing.default_currency }}
 {% endif %}
 {% if mnohub_config.mcluster_autostop_disabled is defined %}

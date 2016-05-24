@@ -1,0 +1,186 @@
+---
+
+- name: Dev Platform | Release folder
+  set_fact: release_folder="{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
+
+- name: Dev Platform | Download application from S3
+  s3:
+    bucket: "{{ mno_pkgs_bucket }}"
+    object: "dev-platform/{{ dev_platform_folder }}/{{ dev_platform_version }}.tar.gz"
+    dest: "{{ deploy_directory }}/{{ dev_platform_version }}.tar.gz"
+    mode: get
+    region: "{{ mno_pkgs_s3_aws_region }}"
+    aws_access_key: "{{ mno_pkgs_s3_aws_access_key }}"
+    aws_secret_key: "{{ mno_pkgs_s3_aws_secret_key }}"
+
+- name: Dev Platform | Replace version
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    state: absent
+
+- name: Dev Platform | Create version directory (/apps/dev-platform/releases/XXX)
+  file: path={{ deploy_directory }}/releases/{{ release_folder }} owner=deployer group=deployer state=directory
+
+- name: Dev Platform | Extract current version
+  command: "tar -xzf {{ deploy_directory }}/{{ dev_platform_version }}.tar.gz -C {{ deploy_directory }}/releases/{{ release_folder }}"
+
+- name: Dev Platform | Clean up tar file
+  file:
+    path: "{{ deploy_directory }}/{{ dev_platform_version }}.tar.gz"
+    state: absent
+
+- name: Dev Platform | Clean up gems
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/bundle"
+    state: absent
+
+- name: Dev Platform | Clean up gems
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor"
+    state: directory
+
+- name: Dev Platform | Database file database.yml
+  template:
+    src: database.yml
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/database.yml"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: Dev Platform | Configuration file config/application.yml
+  template:
+    src: application.yml
+    dest: "{{ deploy_directory }}/shared/config/application.yml"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: Dev Platform | Replace config/application.yml
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/config/application.yml"
+    state: absent
+
+- name: Dev Platform | Symbolic link to config/application.yml
+  file:
+    src: "{{ deploy_directory }}/shared/config/application.yml"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/application.yml"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+
+- name: Dev Platform | Configure settings file
+  template:
+    src: settings_environment.yml
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/settings/{{ rails_environment }}.yml"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: Dev Platform | Replace robots.txt file
+  template:
+    src: robots.txt
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/public/robots.txt"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: Dev Platform | Set directory permissions
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    mode: 0755
+    owner: deployer
+    group: deployer
+    state: directory
+    recurse: yes
+
+- name: Dev Platform | Symbolic link to gems
+  file:
+    src: "{{ deploy_directory }}/shared/vendor_bundle"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/bundle"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+
+- name: Dev Platform | Move precompiled assets files
+  shell: mv {{ deploy_directory }}/releases/{{ release_folder }}/public/{{ item }}/* {{ deploy_directory }}/shared/{{ item }}/
+  with_items:
+    - assets
+    - styles
+    - scripts
+  ignore_errors: true
+
+- name: Dev Platform | Symbolic link to assets
+  file:
+    src: "{{ deploy_directory }}/shared/{{ item }}"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/public/{{ item }}"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+  with_items:
+    - assets
+    - styles
+    - scripts
+  ignore_errors: true
+
+- name: Dev Platform | Run bundle install
+  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle install --path={{ deploy_directory }}/shared/vendor_bundle --gemfile={{ deploy_directory }}/releases/{{ release_folder }}/Gemfile --deployment --without development test"
+  sudo_user: deployer
+  environment: "{{ default_environment }}"
+
+- name: Dev Platform | Migrate the database
+  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle exec rake db:migrate"
+  environment: "{{ default_environment }}"
+  sudo_user: deployer
+  when: not dev_platform.skip_migrations
+
+- name: Dev Platform | Seed the database
+  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle exec rake db:seed:locales"
+  environment: "{{ default_environment }}"
+  sudo_user: deployer
+  when: not dev_platform.skip_migrations
+
+- name: Dev Platform | Replace previous version
+  file:
+    path: "{{ deploy_directory }}/current"
+    state: absent
+
+- name: Dev Platform | Symbolic link to current version
+  file:
+    src: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    dest: "{{ deploy_directory }}/current"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+
+- name: Dev Platform | Clean directories
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/{{ item }}"
+    state: absent
+  with_items:
+    - log
+    - tmp
+    - solr
+    - geocoder
+    - downloads
+
+- name: Dev Platform | Symbolic links to shared directories
+  file:
+    src: "{{ deploy_directory }}/shared/{{ item }}"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/{{ item }}"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+  with_items:
+    - log
+    - tmp
+    - solr
+    - geocoder
+    - downloads
+
+- name: Dev Platform | Restart puma service
+  service: name=puma state=restarted

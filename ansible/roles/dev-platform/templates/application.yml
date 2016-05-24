@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+
+# Rails secret key
+SECRET_KEY_BASE: {{ dev_platform_config.rails_secret_key }}
+
+# Newrelic api key
+NEWRELIC_LICENSE_KEY: {{ newrelic_license_key }}
+
+# Redis
+REDIS_URL: redis://{{ dev_platform.redis.endpoint }}:6379/0

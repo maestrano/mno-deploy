@@ -1,0 +1,9 @@
+---
+
+server_name: "{{ dev_platform.dns_record.record }}"
+deploy_directory: "/apps/dev_platform"
+s3_file: "dev_platform/{{ dev_platform_folder }}/{{ dev_platform_version }}.tar.gz"
+default_environment:
+  RAILS_ENV: "{{ rails_environment }}"
+  PATH: /usr/local/rvm/gems/ruby-2.3.1/bin:/usr/local/rvm/gems/ruby-2.3.1@global/bin:/usr/local/rvm/rubies/ruby-2.3.1/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/rvm/bin
+  GEM_PATH: /usr/local/rvm/gems/ruby-2.3.1:/usr/local/rvm/gems/ruby-2.3.1@global

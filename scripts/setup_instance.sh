@@ -34,6 +34,7 @@ tar -xzf mno-infrastructure.tar.gz
 #====================================================
 cp -R ../ansible/* ./ansible/
 cp -R ../scripts/* ./scripts/
+chmod 755 ./scripts/*
 
 #====================================================
 # 3 - Execute instance setup script

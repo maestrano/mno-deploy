@@ -1,4 +1,5 @@
-# {{ ansible_managed }}
+# Based on the number of cores
+workers {{ ansible_processor_cores }}
 
 # Min and Max threads per worker
 threads 6, 512
@@ -20,3 +21,6 @@ stdout_redirect "#{shared_dir}/log/puma.stdout.log", "#{shared_dir}/log/puma.std
 pidfile "#{shared_dir}/pids/puma.pid"
 state_path "#{shared_dir}/pids/puma.state"
 activate_control_app
+
+# Reload gems
+prune_bundler

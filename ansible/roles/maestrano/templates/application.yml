@@ -1,8 +1,8 @@
 # {{ ansible_managed }}
 
 # Database credentials
-database_hostname: {{ rds.endpoint }}
-database_name: {{ mnohub_config.database.name }}
+database_hostname: {{ mnohub_config.database.host }}
+database_name: {{ mnohub_config.database.database }}
 database_username: {{ mnohub_config.database.username }}
 database_password: {{ mnohub_config.database.password }}
 

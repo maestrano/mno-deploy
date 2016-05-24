@@ -1,0 +1,112 @@
+---
+
+# Developer Platform Configuration
+
+- set_fact: maestrano_component="dev-platform-server-local"
+
+- name: Create Developer Platform Redis Store
+  elasticache:
+    name: "{{ dev_platform.redis.name }}"
+    state: present
+    engine: redis
+    cache_port: 6379
+    node_type: "{{ dev_platform.redis.node_type }}"
+    num_nodes: "{{ dev_platform.redis.num_nodes }}"
+    cache_subnet_group: "{{ redis_group.name }}"
+    security_group_ids: "{{ redis_group.vpc_security_groups }}"
+    region: "{{ aws_region }}"
+    wait: yes
+  register: created_dev_platform_redis
+
+- name: Add Redis Store DNS record
+  route53:
+    command: create
+    zone: "{{ (route53.zone.name|string) }}"
+    record: "{{ dev_platform.redis.endpoint }}"
+    type: CNAME
+    value: "{{ created_dev_platform_redis.elasticache.data.CacheNodes[0].Endpoint.Address }}"
+    alias: False
+    ttl: 60
+    private_zone: "{{ route53.zone.private_zone }}"
+
+- name: Create Developer Platform ELB
+  ec2_elb_lb:
+    name: "{{ dev_platform.elastic_load_balancer.name }}"
+    state: present
+    scheme: "{{ dev_platform.elastic_load_balancer.scheme | default('internet-facing')}}"
+    connection_draining_timeout: "{{ dev_platform.elastic_load_balancer.connection_draining_timeout }}"
+    cross_az_load_balancing: "yes"
+    region: "{{ aws_region }}"
+    ec2_access_key: "{{ aws_access_key }}"
+    ec2_secret_key: "{{ aws_secret_key }}"
+    subnets: "{{ dev_platform.elastic_load_balancer.subnets }}"
+    security_group_ids: "{{ dev_platform.elastic_load_balancer.security_group_ids }}"
+    listeners: "{{ dev_platform.elastic_load_balancer.listeners }}"
+    health_check: "{{ dev_platform.elastic_load_balancer.health_check }}"
+  register: mnoe_elastic_load_balancer
+
+- name: Add DNS record for ELB
+  route53:
+    command: create
+    zone: "{{ (route53.zone.name|string) }}"
+    record: "{{ dev_platform.dns_record.record }}"
+    type: "{{ dev_platform.dns_record.type }}"
+    value: "{{ mnoe_elastic_load_balancer.elb.dns_name }}"
+    alias: "{{ dev_platform.dns_record.alias }}"
+    ttl: "{{ dev_platform.dns_record.ttl }}"
+    private_zone: "{{ route53.zone.private_zone }}"
+    alias_hosted_zone_id: "{{ dev_platform.elastic_load_balancer.alias_hosted_zone_id }}"
+    overwrite: "{{ dev_platform.dns_record.overwrite }}"
+
+- name: Create Developer Platform Launch Configuration
+  ec2_lc:
+    name: "{{ dev_platform.launch_configuration.name }}"
+    key_name: "{{ dev_platform.launch_configuration.key_name }}"
+    region: "{{ aws_region }}"
+    ec2_access_key: "{{ aws_access_key }}"
+    ec2_secret_key: "{{ aws_secret_key }}"
+    image_id: "{{ dev_platform.launch_configuration.image_id }}"
+    instance_type: "{{ dev_platform.launch_configuration.instance_type }}"
+    security_groups: "{{ dev_platform.launch_configuration.security_groups }}"
+    user_data: "{{ lookup('template', '../templates/user_data.sh') }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: 50
+        device_type: gp2 # SSD
+        delete_on_termination: true
+  when: dev_platform.launch_configuration.spot_price is undefined or dev_platform.launch_configuration.spot_price is none
+
+- name: Create Developer Platform Launch Configuration
+  ec2_lc:
+    name: "{{ dev_platform.launch_configuration.name }}"
+    key_name: "{{ dev_platform.launch_configuration.key_name }}"
+    region: "{{ aws_region }}"
+    ec2_access_key: "{{ aws_access_key }}"
+    ec2_secret_key: "{{ aws_secret_key }}"
+    image_id: "{{ dev_platform.launch_configuration.image_id }}"
+    instance_type: "{{ dev_platform.launch_configuration.instance_type }}"
+    spot_price: "{{ dev_platform.launch_configuration.spot_price }}"
+    security_groups: "{{ dev_platform.launch_configuration.security_groups }}"
+    user_data: "{{ lookup('template', '../templates/user_data.sh') }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: 50
+        device_type: gp2 # SSD
+        delete_on_termination: true
+  when: dev_platform.launch_configuration.spot_price is not none
+
+- name: Create Developer Platform Auto Scaling Group
+  ec2_asg:
+    name: "{{ dev_platform.auto_scaling_group.name }}"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    launch_config_name: "{{ dev_platform.launch_configuration.name }}"
+    min_size: "{{ dev_platform.auto_scaling_group.min_size }}"
+    max_size: "{{ dev_platform.auto_scaling_group.max_size }}"
+    desired_capacity: "{{ dev_platform.auto_scaling_group.desired_capacity }}"
+    vpc_zone_identifier: "{{ dev_platform.auto_scaling_group.vpc_zone_identifier }}"
+    availability_zones: "{{ dev_platform.auto_scaling_group.availability_zones }}"
+    load_balancers: "{{ dev_platform.elastic_load_balancer.name }}"
+    tags: "{{ dev_platform.auto_scaling_group.tags }}"
+  register: mnoe_auto_scaling_group

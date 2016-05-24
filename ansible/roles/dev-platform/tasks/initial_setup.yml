@@ -1,0 +1,103 @@
+---
+
+- name: Developer Platform | Install packages
+  apt: "name={{ item }} state=present update_cache=yes"
+  with_items:
+    - curl
+    - libcurl3
+    - libcurl3-gnutls
+    - libcurl4-openssl-dev
+    - libmysqlclient-dev
+    - libsqlite3-dev
+    - nodejs
+    - ruby-dev
+  when: ansible_os_family == "Debian"
+
+- name: Developer Platform | Install packages
+  yum: "name={{ item }} state=present update_cache=yes"
+  with_items:
+    - curl
+    - nodejs
+  when: ansible_os_family == "RedHat"
+
+- name: Developer Platform | Create deployment user
+  user: name=deployer comment="Application deployment user"
+
+- name: Developer Platform | Add deployer user to sudoers
+  lineinfile: dest=/etc/sudoers regexp="deployer ALL" line="deployer ALL=(ALL) NOPASSWD:ALL" state=present
+
+- name: Developer Platform | Create deployment directory
+  file: path={{deploy_directory}} owner=deployer group=deployer state=directory
+
+- name: Developer Platform | Make shared directories
+  file: path={{deploy_directory}}/shared/{{item}} group=deployer owner=deployer state=directory
+  with_items:
+    - tmp
+    - log
+    - public
+    - bundle
+    - bin
+    - config
+    - pids
+    - sockets
+    - vendor_bundle
+    - downloads
+    - geocoder
+    - solr
+    - assets
+    - styles
+    - scripts
+
+- name: Developer Platform | Install bundler
+  command: gem install bundler
+
+- name: Developer Platform | Install puma
+  command: gem install puma
+
+- include: puma_deb.yml
+  when: ansible_os_family == "Debian"
+
+- include: puma_rhel.yml
+  when: ansible_os_family == "RedHat"
+
+- name: Developer Platform | Copy puma.rb config
+  template: src=puma.rb dest={{deploy_directory}}/shared/config/puma.rb owner=deployer group=deployer mode=0755
+
+- name: Developer Platform | Nginx default site deactivation
+  file: path=/etc/nginx/sites-enabled/default.conf state=absent
+
+- name: Developer Platform | Nginx site configuration
+  template: "src=etc-nginx-dev-platform dest=/etc/nginx/sites-available/dev-platform"
+  register: nginxconfig
+
+- name: Developer Platform | Nginx certificates directory
+  file: path=/etc/nginx/certificates state=directory
+  when: ssl_internal_cert is defined and ssl_internal_key is defined
+
+- name: Developer Platform | Nginx SSL Certificate
+  template: "src=etc-nginx-dev-platform-ssl-cert dest=/etc/nginx/certificates/dev-platform.crt"
+  register: nginxsslcert
+  when: ssl_internal_cert is defined and ssl_internal_key is defined
+
+- name: Developer Platform | Nginx SSL Certificate Key
+  template: "src=etc-nginx-dev-platform-ssl-key dest=/etc/nginx/certificates/dev-platform.key"
+  register: nginxsslkey
+  when: ssl_internal_cert is defined and ssl_internal_key is defined
+
+- name: Developer Platform | Nginx site activation
+  file:
+    src: "/etc/nginx/sites-available/dev-platform"
+    dest: "/etc/nginx/sites-enabled/dev-platform"
+    state: link
+    force: yes
+
+- name: Developer Platform | Nginx restart
+  shell: service nginx restart
+  when: nginxconfig.changed or (nginxsslcert is defined and nginxsslcert.changed) or (nginxsslkey is defined and nginxsslkey.changed)
+
+- name: Developer Platform | Configure splunk forwarder inputs
+  shell: "/opt/splunkforwarder/bin/splunk add monitor {{ item.monitor }} -index {{ item.index }} -hostname {{ ansible_hostname }} -auth {{ splunk.username }}:{{ splunk.password }}"
+  when: not splunk.skip
+  with_items: "{{ splunk.dev_platform.inputs }}"
+  tags: [splunk-configure]
+  ignore_errors: true

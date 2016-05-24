@@ -16,6 +16,8 @@ nex_app_orchestrator_folder: develop
 frontend_project: changeme
 frontend_version: changeme
 frontend_folder: develop
+dev_platform_folder: develop
+dev_platform_version: changeme
 
 #=======================================================================
 #=======================================================================
@@ -49,9 +51,6 @@ tenant_dropbox_s3_aws_access_key: "changeme-with-s3-tenant-key"
 tenant_dropbox_s3_aws_secret_key: "changeme-with-s3-tenant-secret"
 tenant_dropbox_s3_aws_region: "ap-southeast-2"
 
-# Dropbox paths
-dropbox_mno_infrastructure_builds_path: '/mno-infrastructure/develop'
-
 #=======================================================================
 #=======================================================================
 # General Environment configuration
@@ -73,10 +72,10 @@ default_base_ami_os: ubuntu
 # default_base_ami_os: rhel
 # default_base_ami: ami-d3daace9 # Red Hat Enterprise Linux 7.1
 # default_base_ami_os: rhel
-default_instance_type: m1.medium
+default_instance_type: t2.medium
 
 # Used to restrict SSH access to the jumpbox/NAT
-inbound_ip_range: 103.237.93.231/32
+nat_inbound_ip_range: "{{ vpc.cidr_block }}"
 
 # New Relic
 newrelic_license_key:
@@ -125,6 +124,12 @@ splunk:
       - {index: "main", monitor: "/var/log/ansible.log"}
       - {index: "main", monitor: "/var/log/torquebox/torquebox.log"}
       - {index: "main", monitor: "{{ deploy_directory }}/current/log/{{ rails_environment }}.log"}
+  dev_platform:
+    inputs:
+      - {index: "main", monitor: "/var/log/ansible.log"}
+      - {index: "main", monitor: "{{ deploy_directory }}/current/log/puma.stderr.log"}
+      - {index: "main", monitor: "{{ deploy_directory }}/current/log/puma.stdout.log"}
+      - {index: "main", monitor: "{{ deploy_directory }}/current/log/{{ rails_environment }}.log"}
 
 # Private Route53 Zone
 route53:
@@ -151,7 +156,6 @@ s3_buckets:
   private: generic-private-assets
   torquebox: generic-torquebox-cluster
 
-
 # VPC naming
 vpc_base_name: "{{ application_name }}-{{ environment_name }}-{{ rails_environment }}"
 vpc_short_name: "{{ application_name }}-{{ environment_name }}"
@@ -176,6 +180,7 @@ asg_tags:
 # If you override this, you should keep the same hierarchy (public | private | elb)
 vpc:
   skip: false
+  vpc_id: None
   name: "{{ vpc_base_name }}-vpc"
   cidr_block: 192.168.14.0/23
   subnets:
@@ -399,7 +404,6 @@ vpc_nat:
   skip: false
   ami_name: amzn-ami-vpc-nat-hvm-2016.03.0.x86_64-ebs
   instance_type: t2.micro
-  spot_price: None
   subnet_id: "{{ created_vpc.subnets[4].id }}"
 
 # IAM roles
@@ -465,7 +469,7 @@ maestrano:
 mnohub:
   skip: true # new mnohub is not yet part of the default implementation
   redis:
-    name: "{{ environment_name }}-mnohub-redis"
+    name: mnohub-redis
     node_type: cache.t2.micro
     num_nodes: 1
     endpoint: "{{ environment_name }}-mnohub-redis.{{ dns.base }}"
@@ -592,7 +596,7 @@ nex:
 connec:
   skip: false
   redis:
-    name: "{{ environment_name }}-connec-redis"
+    name: connec-redis
     node_type: cache.t2.micro
     num_nodes: 1
     endpoint: "{{ environment_name }}-connec-redis.{{ dns.base }}"
@@ -631,7 +635,6 @@ connec:
       image_id: "{{ default_base_ami }}"
       key_name: "{{ keypair }}"
       instance_type: "{{ default_instance_type }}"
-      spot_price: None
       security_groups:
         - "{{ created_security_groups.results[3].group_id }}" # Public tier security group
         - "{{ created_security_groups.results[4].group_id }}" # RDS security group
@@ -641,7 +644,6 @@ connec:
       image_id: "{{ default_base_ami }}"
       key_name: "{{ keypair }}"
       instance_type: "{{ default_instance_type }}"
-      spot_price: None
       security_groups:
         - "{{ created_security_groups.results[3].group_id }}" # Public tier security group
         - "{{ created_security_groups.results[4].group_id }}" # RDS security group
@@ -676,7 +678,7 @@ connec:
 impac:
   skip: false
   redis:
-    name: "{{ environment_name }}-impac-redis"
+    name: impac-redis
     node_type: cache.t2.micro
     num_nodes: 1
     endpoint: "{{ environment_name }}-impac-redis.{{ dns.base }}"
@@ -804,7 +806,7 @@ mnoe:
     health_check:
       ping_protocol: http
       ping_port: 80
-      ping_path: "/ping"
+      ping_path: "/mnoe/ping"
       response_timeout: 3 # seconds
       interval: 30 # seconds
       unhealthy_threshold: 2
@@ -836,6 +838,65 @@ mnoe:
         Environment: "{{ environment_name }}"
         Rails_Environment: "{{ rails_environment }}"
         Description: "Maestrano Enterprise server"
+
+# Developer platform configuration
+dev_platform:
+  skip: true
+  skip_migrations: false
+  elastic_load_balancer:
+    name: "{{ vpc_short_name }}-devp-elb"
+    connection_draining_timeout: 60
+    zones: "{{ aws_availability_zones }}"
+    alias_hosted_zone_id: "{{ route53.zone.id }}"
+    subnets:
+      - "{{ created_vpc.subnets[4].id }}" # ELB subnet
+      - "{{ created_vpc.subnets[5].id }}" # ELB subnet
+    security_group_ids:
+      - "{{ created_security_groups.results[2].group_id }}" # ELB tier security group
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+    health_check:
+      ping_protocol: http
+      ping_port: 80
+      ping_path: "/ping"
+      response_timeout: 3 # seconds
+      interval: 30 # seconds
+      unhealthy_threshold: 2
+      healthy_threshold: 4
+  dns_record:
+    name: "{{ vpc_short_name }}-devp-dns"
+    record: "dev-platform.{{ dns.base }}"
+    type: CNAME
+    alias: False
+    ttl: 60
+    overwrite: yes
+  launch_configuration:
+    name: "{{ vpc_short_name }}-devp-lc"
+    image_id: "{{ default_base_ami }}"
+    key_name: "{{ keypair }}"
+    instance_type: "{{ default_instance_type }}"
+    security_groups:
+      - "{{ created_security_groups.results[3].group_id }}" # Public tier security group
+      - "{{ created_security_groups.results[4].group_id }}" # RDS security group
+  auto_scaling_group:
+    name: "{{ vpc_short_name }}-devp-asg"
+    availability_zones: "{{ aws_availability_zones }}"
+    vpc_zone_identifier: ["{{ created_vpc.subnets[0].id }}", "{{ created_vpc.subnets[1].id }}"] # Public subnets
+    min_size: 0
+    max_size: 4
+    desired_capacity: 0
+    tags:
+      - Name: "{{ vpc_short_name }}-devp-app"
+        Environment: "{{ environment_name }}"
+        Rails_Environment: "{{ rails_environment }}"
+        Description: "Developer Platform server"
+  redis:
+    name: devp-redis
+    node_type: cache.t2.micro
+    num_nodes: 1
+    endpoint: "{{ environment_name }}-devp-redis.{{ dns.base }}"
 
 # RDS database for MNO Hub, MCluster and any required frontend
 rds:
@@ -986,6 +1047,7 @@ impac_config:
   private_dns:
     scheme: http
     host: "{{ impac.dns_record.record }}"
+  sparkpost_api_key: changeme
 
 # Maestrano configuration
 mnohub_config:
@@ -1038,7 +1100,8 @@ mnohub_config:
   open_exchange_rates:
     app_id: changeme
   database:
-    name: maestrano
+    host: "{{ rds.endpoint }}"
+    database: maestrano
     username: maestrano
     password: changeme
     pool: 15
@@ -1093,9 +1156,21 @@ connec_config:
       username: admin
       password: changeme
 
-# RVM platform specific config, see https://rvm.io/rvm/autolibs
-# Only Maestrano Hub uses it at the moment. Will be removed.
-rvm1_autolib_mode: 3 # Use libs, install missing libs
+# Developer Platform configuration
+dev_platform_config:
+  public_dns:
+    scheme: https
+    host: "{{ dev_platform.dns_record.record }}"
+  private_dns:
+    scheme: http
+    host: "{{ dev_platform.dns_record.record }}"
+  database:
+    database: dev_platform
+    username: dev_platform
+    password:  changeme
+    pool: 10
+    timeout: 10000
+  rails_secret_key: changeme
 
 # Rundeck configuration
 rundeck_config:
@@ -1172,6 +1247,12 @@ rundeck_config:
       node_name: "{{ vpc_short_name }}-frontend-app"
       ansible_playbook: "{{ mno-enterprise-server-ec2.yml }}"
       environment: uat
+    - name: 'DEV_PLATFORM_UAT'
+      description: 'UAT - Dev Platform'
+      component: dev-platform
+      node_name: "{{ vpc_short_name }}-devp-app"
+      ansible_playbook: "{{ mno-enterprise-server-ec2.yml }}"
+      environment: uat
     - name: 'MNOHUB_PRD'
       description: 'Production - MnoHub'
       component: mnohub
@@ -1185,13 +1266,13 @@ rundeck_config:
       ansible_playbook: "{{ nex-app-server-ec2.yml }}"
       environment: production
     - name: 'CONNEC_API_PRD'
-      description: 'UAT - Connec! API'
+      description: 'Production - Connec! API'
       component: connec
       node_name: "{{ vpc_short_name }}-connec-api"
       ansible_playbook: "{{ connec-api-server-ec2.yml }}"
       environment: production
     - name: 'CONNEC_JOB_PRD'
-      description: 'UAT - Connec! Jobs'
+      description: 'Production - Connec! Jobs'
       component: connec
       node_name: "{{ vpc_short_name }}-connec-jobs"
       ansible_playbook: "{{ connec-jobs-server-ec2.yml }}"
@@ -1206,6 +1287,12 @@ rundeck_config:
       description: 'Production - Mnoe front-end'
       component: frontend-app
       node_name: "{{ vpc_short_name }}-frontend-app"
+      ansible_playbook: "{{ mno-enterprise-server-ec2.yml }}"
+      environment: production
+    - name: 'DEV_PLATFORM_PRD'
+      description: 'Production - Dev Platform'
+      component: dev-platform
+      node_name: "{{ vpc_short_name }}-devp-app"
       ansible_playbook: "{{ mno-enterprise-server-ec2.yml }}"
       environment: production
 rundeck_protocol: "{{ rundeck_config.protocol }}"
@@ -1224,3 +1311,7 @@ rundeck_database_pass: "{{ rundeck_config.database.password }}" # Defaults to ru
 logrotate:
   options: ['su deployer deployer', 'rotate 2', 'daily', 'maxsize 100M', 'missingok', 'notifempty', 'sharedscripts', 'copytruncate', 'compress']
   options_torquebox: ['su torquebox torquebox', 'rotate 2', 'daily', 'maxsize 100M', 'missingok', 'notifempty', 'sharedscripts', 'copytruncate', 'compress']
+
+# RVM platform specific config, see https://rvm.io/rvm/autolibs
+# Only Maestrano Hub uses it at the moment. Will be removed.
+rvm1_autolib_mode: 3 # Use libs, install missing libs

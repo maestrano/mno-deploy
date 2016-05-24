@@ -20,4 +20,4 @@ export AWS_REGION=$AWS_DEFAULT_REGION
 : ${ENVIRONMENT_CONFIGURATION?"Need to set variable: ENVIRONMENT_CONFIGURATION"}
 
 # Execute playbooks to setup environment
-ansible-playbook -vvv -i hosts site.yml --extra-vars="{\"env_config\": \"${ENVIRONMENT_CONFIGURATION}\"}"
+ansible-playbook -vvvv -i hosts site.yml --extra-vars="{\"env_config\": \"${ENVIRONMENT_CONFIGURATION}\"}" --vault-password-file ${ANSIBLE_VAULT_PASSWORD_FILE}

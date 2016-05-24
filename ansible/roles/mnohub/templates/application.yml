@@ -1,13 +1,13 @@
 # {{ ansible_managed }}
-# TODO: Cleanup required
+# TODO: Cleanup required - move from settings.yml into this file
 
 # Rails Secrets
 secret_token: {{ mnohub_config.secrets.secret_token }}
 secret_key_base: {{ mnohub_config.secrets.secret_key_base }}
 
 # Database credentials
-database_hostname: {{ rds.endpoint }}
-database_name: {{ mnohub_config.database.name }}
+database_hostname: {{ mnohub_config.database.host }}
+database_name: {{ mnohub_config.database.database }}
 database_username: {{ mnohub_config.database.username }}
 database_password: {{ mnohub_config.database.password }}
 

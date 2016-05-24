@@ -1,0 +1,27 @@
+---
+
+- name: Developer Platform | Detect if initial setup
+  stat:
+    path: "{{ deploy_directory }}"
+  register: deploy_directory_path
+
+- name: Developer Platform | Setup RDS instance
+  include: rds.yml
+
+- name: Developer Platform | Initial application setup
+  include: initial_setup.yml
+
+- name: Developer Platform | Deploy application version
+  include: deploy.yml
+  tags: [deploy]
+
+- name: Developer Platform | Deploy application version
+  include: deploy.yml
+
+- name: Developer Platform | Run/Reload Puma (Debian)
+  include: puma_deb.yml
+  when: ansible_os_family == "Debian"
+
+- name: Developer Platform | Run/Reload Puma (RHEL)
+  include: puma_rhel.yml
+  when: ansible_os_family == "RedHat"

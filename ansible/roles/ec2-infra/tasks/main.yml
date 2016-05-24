@@ -36,6 +36,9 @@
 - include: mno-enterprise.yml
   when: not mnoe.skip
   tags: [infra_mnoe]
+- include: dev-platform.yml
+  when: not dev_platform.skip
+  tags: [infra_dev_platform]
 - include: rundeck.yml
   when: not rundeck.skip
   tags: [infra_rundeck]

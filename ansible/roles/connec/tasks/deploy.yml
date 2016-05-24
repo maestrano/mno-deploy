@@ -93,7 +93,7 @@
     state: link
     force: yes
 
-- name: MNO Hub | Clean directory for Xero API certificates
+- name: Connec | Clean directory for Xero API certificates
   file:
     path: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/xero-certs"
     state: absent
@@ -102,7 +102,7 @@
     mode: 0755
   tags: [xero]
 
-- name: MNO Hub | Clean directory for Xero API certificates
+- name: Connec | Clean directory for Xero API certificates
   file:
     path: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/xero-certs/{{ rails_environment }}"
     state: directory
@@ -111,7 +111,7 @@
     mode: 0755
   tags: [xero]
 
-- name: MNO Hub | Deploy Xero API certificates
+- name: Connec | Deploy Xero API certificates
   copy:
     content: "{{ lookup('file', 'files/xero_certs/' + environment_name + '/' + rails_environment + '/' + item) }}"
     dest: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/xero-certs/{{ rails_environment }}/{{ item }}"

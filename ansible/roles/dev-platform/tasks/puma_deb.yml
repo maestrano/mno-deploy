@@ -1,0 +1,7 @@
+---
+
+- name: Developer Platform | Add /etc/init/puma.conf
+  template: src=etc_init_puma.conf dest=/etc/init/puma.conf force=yes mode=0755
+
+- name: Developer Platform | Add puma to upstart
+  service: name=puma state=started enabled=yes

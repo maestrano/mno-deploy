@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+
+{{ rails_environment }}:
+  adapter: mysql2
+  encoding: utf8
+  host: {{ rds.endpoint }}
+  database: {{ dev_platform_config.database.database }}
+  pool: {{ dev_platform_config.database.pool }}
+  timeout: {{ dev_platform_config.database.timeout }}
+  username: {{ dev_platform_config.database.username }}
+  password: {{ dev_platform_config.database.password }}

@@ -41,7 +41,7 @@ export AWS_REGION=ap-southeast-2
 export ANSIBLE_VAULT_PASSWORD_FILE=path/to/ansible/vault/key
 export ENVIRONMENT_CONFIGURATION=myenv
 export MNO_DEPLOY_VERSION=develop/latest
-scripts/setup_infrastructure.sh
+sh scripts/setup_infrastructure.sh
 ```
 
 ### Common components configuration

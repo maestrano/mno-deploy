@@ -74,6 +74,26 @@
         volume_size: 50
         device_type: gp2 # SSD
         delete_on_termination: true
+  when: mnohub.launch_configuration.spot_price is undefined or mnohub.launch_configuration.spot_price is none
+
+- name: Create MnoHub Launch Configuration
+  ec2_lc:
+    name: "{{ mnohub.launch_configuration.name }}"
+    key_name: "{{ mnohub.launch_configuration.key_name }}"
+    region: "{{ aws_region }}"
+    ec2_access_key: "{{ aws_access_key }}"
+    ec2_secret_key: "{{ aws_secret_key }}"
+    image_id: "{{ mnohub.launch_configuration.image_id }}"
+    instance_type: "{{ mnohub.launch_configuration.instance_type }}"
+    spot_price: "{{ mnohub.launch_configuration.spot_price }}"
+    security_groups: "{{ mnohub.launch_configuration.security_groups }}"
+    user_data: "{{ lookup('template', '../templates/user_data.sh') }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: 50
+        device_type: gp2 # SSD
+        delete_on_termination: true
+  when: mnohub.launch_configuration.spot_price is defined and mnohub.launch_configuration.spot_price is not none
 
 - name: Create MnoHub Auto Scaling Group
   ec2_asg:

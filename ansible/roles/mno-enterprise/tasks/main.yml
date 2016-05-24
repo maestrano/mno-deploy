@@ -18,6 +18,20 @@
 - name: Maestrano Enterprise | Deploy application version
   include: deploy.yml
 
+- name: Maestrano Enterprise | Gathering EC2 facts
+  action: ec2_facts
+  tags: [deploy]
+
+- name: Maestrano Enterprise | Instance De-register
+  ec2_elb:
+    ec2_access_key: "{{ infra_ec2_aws_access_key }}"
+    ec2_secret_key: "{{ infra_ec2_aws_access_secret }}"
+    ec2_region: "{{ infra_ec2_aws_region }}"
+    instance_id: "{{ ansible_ec2_instance_id }}"
+    state: absent
+  when: infra_ec2_aws_access_key is defined
+  tags: [deploy]
+
 - name: Maestrano Enterprise | Run/Reload Puma (Debian)
   include: puma_deb.yml
   when: ansible_os_family == "Debian"
@@ -25,3 +39,16 @@
 - name: Maestrano Enterprise | Run/Reload Puma (RHEL)
   include: puma_rhel.yml
   when: ansible_os_family == "RedHat"
+
+- name: Maestrano Enterprise | Instance Register
+  ec2_elb:
+    ec2_access_key: "{{ infra_ec2_aws_access_key }}"
+    ec2_secret_key: "{{ infra_ec2_aws_access_secret }}"
+    ec2_region: "{{ infra_ec2_aws_region }}"
+    instance_id: "{{ ansible_ec2_instance_id }}"
+    ec2_elbs: "{{ item }}"
+    wait: no
+    state: present
+  with_items: "{{ ec2_elbs }}"
+  when: infra_ec2_aws_access_key is defined
+  tags: [deploy]

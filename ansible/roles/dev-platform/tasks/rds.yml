@@ -1,18 +1,18 @@
 ---
 
-- name: Maestrano | Install packages
+- name: Developer Platform | Install packages
   apt: "name={{ item }} state=present update_cache=yes"
   with_items:
     - python-mysqldb
   when: ansible_os_family == "Debian"
 
-- name: Maestrano | Install packages
+- name: Developer Platform | Install packages
   yum: "name={{ item }} state=present"
   with_items:
     - MySQL-python
   when: ansible_os_family == "RedHat"
 
-- name: Maestrano | Create RDS database
+- name: Developer Platform | Create RDS database
   mysql_db:
     login_host: "{{ rds.endpoint }}"
     login_user: "{{ rds.username }}"
@@ -20,17 +20,17 @@
     login_port: 3306
     collation: utf8_general_ci
     encoding: utf8
-    name: "{{ mnohub_config.database.database }}"
+    name: "{{ dev_platform_config.database.database }}"
     state: present
 
-- name: Maestrano | Create RDS database user
+- name: Developer Platform | Create RDS database user
   mysql_user:
     login_host: "{{ rds.endpoint }}"
     login_user: "{{ rds.username }}"
     login_password: "{{ rds.password }}"
     login_port: 3306
+    name: "{{ dev_platform_config.database.username }}"
     host: '%'
-    name: "{{ mnohub_config.database.username }}"
-    password: "{{ mnohub_config.database.password }}"
-    priv: "{{ mnohub_config.database.database }}.*:ALL,GRANT"
+    password: "{{ dev_platform_config.database.password }}"
+    priv: "{{ dev_platform_config.database.database }}.*:ALL,GRANT"
     state: present

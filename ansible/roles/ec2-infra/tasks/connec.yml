@@ -3,13 +3,6 @@
 # Connec! Configuration
 # Creates separate ASGs for API and Background Jobs
 
-- name: Create Connec Redis Subnet Group
-  elasticache_subnet_group:
-    name: "{{ redis_group.name }}"
-    description: "Connec! Redis Subnet Group"
-    subnets: "{{ redis_group.subnets }}"
-    state: present
-
 - name: Create Connec Redis Store
   elasticache:
     name: "{{ connec.redis.name }}"
@@ -101,7 +94,7 @@
         volume_size: 50
         device_type: gp2 # SSD
         delete_on_termination: true
-  when: connec.launch_configuration.api.spot_price is not none
+  when: connec.launch_configuration.api.spot_price is defined and connec.launch_configuration.api.spot_price is not none
 
 - name: Create Connec! Auto Scaling Group API
   ec2_asg:
@@ -156,7 +149,7 @@
         volume_size: 50
         device_type: gp2 # SSD
         delete_on_termination: true
-  when: connec.launch_configuration.jobs.spot_price is not none
+  when: connec.launch_configuration.jobs.spot_price is defined and connec.launch_configuration.jobs.spot_price is not none
 
 - name: Create Connec! Auto Scaling Group Background Jobs
   ec2_asg:
