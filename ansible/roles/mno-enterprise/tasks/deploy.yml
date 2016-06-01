@@ -69,14 +69,6 @@
     state: link
     force: yes
 
-- name: MNOE Frontend | Configure settings file
-  template:
-    src: settings_environment.yml
-    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/settings/{{ rails_environment }}.yml"
-    owner: deployer
-    group: deployer
-    mode: 0755
-
 - name: MNOE Frontend | Replace robots.txt file
   template:
     src: robots.txt

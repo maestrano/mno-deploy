@@ -1,5 +1,4 @@
-# Rails secret key
-SECRET_KEY_BASE: {{ frontend_config.rails_secret_key }}
+# {{ ansible_managed }}
 
 # Database
 database_hostname: {{ rds.endpoint }}
@@ -7,22 +6,27 @@ database_name: {{ mnoe_database_name }}
 database_username: {{ mnoe_database_username }}
 database_password: {{ mnoe_database_password }}
 
-# Emailing platform - Mandrill
-mandrill_key: {{ frontend_config.mandrill_key }}
-mailer_default_host: {{ frontend_config.public_dns.host }}
-
-{% if frontend_config.intercom is defined %}
-# Intercom configuration
-intercom_app_id: {{ frontend_config.intercom.app_id }}
-{% if frontend_config.intercom.api_secret is defined %}
-intercom_api_secret: {{ frontend_config.intercom.api_secret }}
-{% endif %}
+# Tenant API keys
+{% if frontend_config.tenant is defined and frontend_config.tenant.id is defined %}
+tenant_id: {{ frontend_config.tenant.id }}
+tenant_key: {{ frontend_config.tenant.key }}
 {% endif %}
 
-# Newrelic api key
-newrelic_license_key: {{ newrelic_license_key }}
+# Impac! configuration
+{% if impac_config is defined and impac_config.public_dns is defined and impac_config.public_dns.scheme is defined %}
+impac_protocol: {{ impac_config.public_dns.scheme }}
+impac_host: {{ impac_config.public_dns.host }}
+{% endif %}
 
-{% if frontend_config.google_tag_container is defined %}
-# Google Tag Manager
-google_tag_container: {{ frontend_config.google_tag_container }}
+# Mnohub configuration
+mno_protocol: {{ mnohub_config.public_dns.scheme }}
+mno_host: {{ mnohub_config.public_dns.host }}
+mno_private_protocol: {{ mnohub_config.private_dns.scheme }}
+mno_private_host: {{ mnohub_config.private_dns.host }}
+
+# Extra variables
+{% if frontend_config.extra_variables is defined %}
+{% for key in frontend_config.extra_variables %}
+{{ key }}: {{ (frontend_config.extra_variables[key] | to_json) if frontend_config.extra_variables[key] is mapping else frontend_config.extra_variables[key] }}
+{% endfor %}
 {% endif %}

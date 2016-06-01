@@ -22,6 +22,7 @@
     encoding: utf8
     name: "{{ mnoe_database_name }}"
     state: present
+  when: not rds.skip
 
 - name: Maestrano Enterprise | Create RDS database user
   mysql_user:
@@ -34,3 +35,4 @@
     password: "{{ mnoe_database_password }}"
     priv: "{{ mnoe_database_name }}.*:ALL,GRANT"
     state: present
+  when: not rds.skip

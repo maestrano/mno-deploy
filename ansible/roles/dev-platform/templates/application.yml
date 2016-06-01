@@ -3,8 +3,21 @@
 # Rails secret key
 SECRET_KEY_BASE: {{ dev_platform_config.rails_secret_key }}
 
+# Redis cluster
+REDIS_URL: redis://{{ dev_platform.redis.endpoint }}:6379/0
+
+# Mnohub shared secret
+{% if dev_platform_config.shared_secret is defined %}
+DEV_PLATFORM_SHARED_SECRET: {{ dev_platform_config.shared_secret }}
+{% endif %}
+
 # Newrelic api key
 NEWRELIC_LICENSE_KEY: {{ newrelic_license_key }}
 
-# Redis
-REDIS_URL: redis://{{ dev_platform.redis.endpoint }}:6379/0
+# Oauth Github
+GITHUB_CLIENT_ID: {{ dev_platform_config.github.id }}
+GITHUB_CLIENT_SECRET: {{ dev_platform_config.github.secret }}
+
+# Oauth Google
+GOOGLE_CLIENT_ID: {{ dev_platform_config.google.id }}
+GOOGLE_CLIENT_SECRET: {{ dev_platform_config.google.secret }}

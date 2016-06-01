@@ -16,7 +16,7 @@ server {
   root      {{ deploy_directory }}/current/public;
 
   # Location to route to the rails backend
-  location ~* ^/(api|ping|version|frontend|auth) {
+  location ~* ^/(api|ping|health_check|version|frontend|auth) {
     try_files $uri/index.html $uri @dev_platform;
   }
 
@@ -24,6 +24,8 @@ server {
   try_files $uri $uri/ /index.html;
 
   location @dev_platform {
+    expires      1h;
+    proxy_cache  off;
     proxy_pass http://dev_platform;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header Host $http_host;

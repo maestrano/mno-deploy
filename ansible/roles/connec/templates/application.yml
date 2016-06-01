@@ -1,2 +1,5 @@
+# {{ ansible_managed }}
+
 newrelic_license_key: {{ newrelic_license_key }}
+
 REDIS_URL: redis://{{ connec.redis.endpoint }}:6379/0

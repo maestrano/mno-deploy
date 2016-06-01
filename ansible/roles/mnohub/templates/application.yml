@@ -57,3 +57,14 @@ braintree_private_key: {{ mnohub_config.braintree.private_key }}
 
 # Newrelic api key
 newrelic_license_key: {{ newrelic_license_key }}
+
+# DevPlatform shared secret
+{% if dev_platform_config.shared_secret is defined %}
+DEV_PLATFORM_SHARED_SECRET: {{ dev_platform_config.shared_secret }}
+{% endif %}
+
+# Platform components endpoints
+MNOHUB_ENDPOINT: {{ mnohub_config.public_dns.scheme }}://{{ mnohub_config.public_dns.host }}
+NEX_ENDPOINT: {{ nex_config.public_dns.scheme }}://{{ nex_config.public_dns.host }}
+CONNEC_ENDPOINT: {{ connec_config.public_dns.scheme }}://{{ connec_config.public_dns.host }}
+IMPAC_ENDPOINT: {{ impac_config.public_dns.scheme }}://{{ impac_config.public_dns.host }}

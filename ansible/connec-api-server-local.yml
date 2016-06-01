@@ -11,6 +11,7 @@
     - role: ntp
     - { role: swapfile, swapfile_swappiness: 10 }
     - { role: newrelic, when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
+    - { role: sumocollector, sumologic_collector_application_log_path: "{{ sumologic.connec.log_path }}", when: not(sumologic.skip) }
     - role: splunk
     - role: jruby
     - { role: jdauphant.nginx, keep_only_specified: true }

@@ -19,7 +19,7 @@ server {
     try_files $uri/index.html $uri @mnohub;
   }
 
-  location ~* ^/(api|ping|health_check|active_admin) {
+  location ~* ^/(api|ping|health_check|version|active_admin) {
     root      {{ deploy_directory }}/current/public;
 
     try_files $uri/index.html $uri @mnohub-api;

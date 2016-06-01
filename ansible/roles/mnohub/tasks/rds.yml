@@ -22,6 +22,7 @@
     encoding: utf8
     name: "{{ mnohub_config.database.database }}"
     state: present
+  when: not rds.skip
 
 - name: MnoHub | Create RDS database user
   mysql_user:
@@ -34,3 +35,4 @@
     password: "{{ mnohub_config.database.password }}"
     priv: "{{ mnohub_config.database.database }}.*:ALL,GRANT"
     state: present
+  when: not rds.skip
