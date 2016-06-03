@@ -6,7 +6,7 @@ sumologic_installer_rpm_local_folder: "/tmp"
 
 # For Debian apt installation only
 sumologic_installer_remote_file: "/tmp/sumocollector.deb"
-sumocollector_installer_download: ""
+sumocollector_installer_download: "https://collectors.sumologic.com/rest/download/deb/64"
 
 # Credentials
 sumologic_collector_accessid: ""
@@ -16,6 +16,7 @@ sumologic_collector_accesskey: ""
 #   https://service.sumologic.com/help/Default.htm#Using_Clobber.htm
 sumologic_collector_clobber: ""
 
+sumologic_host_name: "{{ ansible_hostname }}"
 sumologic_installer_file: ""
 sumologic_collector_source_template: "collector.json.j2"
 sumologic_collector_timezone: "UTC"
