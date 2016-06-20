@@ -1,0 +1,62 @@
+{
+  "jumpbox": {
+    "user": "ec2-user",
+    "host": "{{ ec2_nat.instances[0].public_dns_name }}"
+  },
+  "connec_api": {
+    "user": "ubuntu",
+    "hosts": [
+{% for instance in ec2_connec_api.instances %}
+      "{{ instance.private_ip_address }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ]
+  },
+  "connec_jobs": {
+    "user": "ubuntu",
+    "hosts": [
+{% for instance in ec2_connec_jobs.instances %}
+      "{{ instance.private_ip_address }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ]
+  },
+  "impac_api": {
+    "user": "ubuntu",
+    "hosts": [
+{% for instance in ec2_impac_api.instances %}
+      "{{ instance.private_ip_address }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ]
+  },
+  "mnohub_api": {
+    "user": "ubuntu",
+    "hosts": [
+{% for instance in ec2_mnohub_api.instances %}
+      "{{ instance.private_ip_address }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ]
+  },
+  "mongodb": {
+    "user": "ubuntu",
+    "hosts": [
+{% for instance in ec2_mongodb.instances %}
+      "{{ instance.private_ip_address }}"{% if not loop.last %},{% endif %}
+
+{% endfor %}
+    ]
+  },
+  "vars": {
+    "mongodb_admin": {
+      "login": "{{ mongodb_root_admin_name }}",
+      "password": "{{ mongodb_root_admin_password }}"
+    },
+    "mongodb_connec": {
+      "db": "{{ mongodb_database_connec }}",
+      "login": "{{ mongodb_user_connec }}",
+      "password": "{{ mongodb_password_connec }}"
+    }
+  }
+}

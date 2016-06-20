@@ -77,7 +77,7 @@
         delete_on_termination: true
   when: connec.launch_configuration.api.spot_price is undefined or connec.launch_configuration.api.spot_price is none
 
-- name: Create Connec! Launch Configuration API
+- name: Create Connec! Launch Configuration API (spot instances)
   ec2_lc:
     name: "{{ connec.launch_configuration.api.name }}"
     key_name: "{{ connec.launch_configuration.api.key_name }}"
@@ -132,7 +132,7 @@
         delete_on_termination: true
   when: connec.launch_configuration.jobs.spot_price is undefined or connec.launch_configuration.jobs.spot_price is none
 
-- name: Create Connec! Launch Configuration Background Jobs
+- name: Create Connec! Launch Configuration Background Jobs (spot instances)
   ec2_lc:
     name: "{{ connec.launch_configuration.jobs.name }}"
     key_name: "{{ connec.launch_configuration.jobs.key_name }}"

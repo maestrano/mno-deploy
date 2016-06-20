@@ -76,7 +76,7 @@
         delete_on_termination: true
   when: mnohub.launch_configuration.spot_price is undefined or mnohub.launch_configuration.spot_price is none
 
-- name: Create MnoHub Launch Configuration
+- name: Create MnoHub Launch Configuration (spot instances)
   ec2_lc:
     name: "{{ mnohub.launch_configuration.name }}"
     key_name: "{{ mnohub.launch_configuration.key_name }}"

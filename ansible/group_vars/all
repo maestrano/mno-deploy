@@ -271,6 +271,7 @@ asg_tags:
 vpc:
   skip: false
   # vpc_id: Optionally set to an existing VPC id
+  vpc_id: !!null
   name: "{{ vpc_base_name }}-vpc"
   cidr_block: 192.168.14.0/23
   subnets:
@@ -561,7 +562,7 @@ maestrano:
 mnohub:
   skip: true # new mnohub is not yet part of the default implementation
   redis:
-    name: mnohub-redis
+    name: "{{ environment_name }}-mnohub-redis"
     node_type: cache.t2.micro
     num_nodes: 1
     endpoint: "{{ environment_name }}-mnohub-redis.{{ dns.base }}"
@@ -698,7 +699,7 @@ connec:
     endpoint: "{{ environment_name }}-connec-redis.{{ dns.base }}"
   elastic_load_balancer:
     name: "{{ vpc_short_name }}-connec-elb"
-    connection_draining_timeout: 60
+    connection_draining_timeout: 600
     zones: "{{ aws_availability_zones }}"
     alias_hosted_zone_id: "{{ route53.zone.id }}"
     subnets:
@@ -784,7 +785,7 @@ impac:
     endpoint: "{{ environment_name }}-impac-redis.{{ dns.base }}"
   elastic_load_balancer:
     name: "{{ vpc_short_name }}-impac-elb"
-    connection_draining_timeout: 60
+    connection_draining_timeout: 600
     zones: "{{ aws_availability_zones }}"
     alias_hosted_zone_id: "{{ route53.zone.id }}"
     subnets:
@@ -838,21 +839,6 @@ mongo:
   skip: False
   size: 100
   encrypted: False
-  elastic_load_balancer:
-    name: "{{ vpc_short_name }}-mongo-elb"
-    connection_draining_timeout: 60
-    zones: "{{ aws_availability_zones }}"
-    alias_hosted_zone_id: "{{ route53.zone.id }}"
-    subnets:
-      - "{{ created_vpc.subnets[2].id }}" # Private subnet
-      - "{{ created_vpc.subnets[3].id }}" # Private subnet
-    security_group_ids:
-      - "{{ created_security_groups.results[1].group_id }}" # Private tier security group
-      - "{{ created_security_groups.results[5].group_id }}" # MongoDB security group
-    listeners:
-      - protocol: tcp
-        load_balancer_port: 27017
-        instance_port: 27017
   dns_record:
     name: "{{ vpc_short_name }}-mongo-dns"
     record: "mongo.{{ dns.base }}"
@@ -860,6 +846,7 @@ mongo:
     alias: False
     ttl: 60
     overwrite: yes
+    hosted_zone_id: "{{ route53.zone.id }}"
   launch_configuration:
     name: "{{ vpc_short_name }}-mongo-lc"
     image_id: "{{ default_base_ami }}"
@@ -1035,7 +1022,7 @@ redis_group:
 
 # Rundeck configuration
 rundeck:
-  skip: false
+  skip: true
   image_id: "{{ default_base_ami }}"
   instance_type: "{{ default_instance_type }}"
   key_name: "{{ keypair }}"
@@ -1274,6 +1261,7 @@ dev_platform_config:
     scheme: http
     host: "{{ dev_platform.dns_record.record }}"
   database:
+    hostname: "{{ rds.endpoint }}"
     database: dev_platform
     username: dev_platform
     password:  changeme

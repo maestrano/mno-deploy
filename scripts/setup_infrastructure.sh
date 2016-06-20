@@ -54,7 +54,7 @@ cp -R ../scripts/* ./scripts/
 # 3 - Execute infrastructure setup script
 #====================================================
 cd ${current_path}/mno-infrastructure
-sh scripts/run.sh
+sh scripts/run.sh "$@"
 
 # Clean up
 cd ${current_path}

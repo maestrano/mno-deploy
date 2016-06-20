@@ -299,7 +299,7 @@ def main():
             host_name=dict(default='localhost'),
             host_port=dict(default='27017'),
             host_type=dict(default='replica', choices=['replica','arbiter']),
-            ssl=dict(default=False),
+            ssl=dict(default='false'),
             build_indexes = dict(type='bool', choices=BOOLEANS, default='yes'),
             hidden = dict(type='bool', choices=BOOLEANS, default='no'),
             priority = dict(default='1.0'),

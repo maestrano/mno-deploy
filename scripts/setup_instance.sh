@@ -40,4 +40,4 @@ chmod 755 ./scripts/*
 # 3 - Execute instance setup script
 #====================================================
 cd "${current_path}/mno-infrastructure"
-sh scripts/install.sh $1 $2
+sh scripts/install.sh "$@"

@@ -11,7 +11,7 @@ idm:
   port: {{ 443 if mnohub_config.private_dns.scheme == 'https' else 80 }}
   cache: 60
 reports:
-  cache: 600
+  cache: 3600
 maestrano:
   protocol: {{ mnohub_config.private_dns.scheme }}
   verify_ssl: false

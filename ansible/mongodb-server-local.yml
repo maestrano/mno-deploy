@@ -13,5 +13,5 @@
   roles:
     - common
     - role: ntp
-    - newrelic
+    - { role: newrelic, when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
     - role: mongodb

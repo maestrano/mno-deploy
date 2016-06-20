@@ -1,0 +1,165 @@
+#=======================================================================
+#=======================================================================
+# Application versions
+#=======================================================================
+#=======================================================================
+mnohub_version: latest
+mnohub_folder: releases
+connec_version: latest
+connec_folder: releases
+impac_version: latest
+impac_folder: releases
+nex_app_orchestrator_version: latest
+nex_app_orchestrator_folder: releases
+
+# S3 Location of the Ansible configuration for this environment
+mno_deploy_configuration_bucket: mno-deploy-example
+mno_deploy_configuration_path: /my-environment
+
+#=======================================================================
+#=======================================================================
+# AWS Keys
+#=======================================================================
+#=======================================================================
+# AWS Access Keys used to provision the infrastructure
+# These keys should be exported before running the provisioning
+# tasks (ec2-infra)
+aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+aws_region: "{{ lookup('env', 'AWS_REGION') }}"
+
+#=======================================================================
+#=======================================================================
+# General Environment configuration
+#=======================================================================
+#=======================================================================
+environment_name: my-environment
+rails_environment: uat
+
+timezone: Australia/Sydney
+aws_availability_zone1: "{{ aws_region }}a"
+aws_availability_zone2: "{{ aws_region }}b"
+aws_availability_zones: ["{{ aws_availability_zone1 }}", "{{ aws_availability_zone2 }}"]
+
+# default_base_ami: ami-e8f1c1ba # Ubuntu 14.04 (PV) - APSE1
+# default_base_ami: ami-7163104b # Ubuntu 14.04 (PV) - APSE2
+# default_base_ami: ami-d3daace9 # Red Hat Enterprise Linux 7.1 - APSE2
+default_base_ami: ami-25c00c46
+default_instance_type: t2.medium
+keypair: my-environment
+
+# Open to the world - for testing only
+nat_inbound_ip_range: 0.0.0.0/0
+
+# Base DNS name
+dns:
+  base: "{{ rails_environment }}.{{ environment_name }}.{{ route53.zone.name }}"
+
+# List of user SSH keys
+ssh_users:
+  - { name: "ubuntu", file: "files/public_keys/my-ssh-key" } # Add this key to folder mno-deploy-ansible/files/public_keys/
+
+#=======================================================================
+#=======================================================================
+# Infrastructure configuration
+#=======================================================================
+#=======================================================================
+# S3 Buckets
+s3_buckets:
+  public: mnohub-my-environment-public-assets
+  private: mnohub-my-environment-private-assets
+  torquebox: "{{ environment_name }}-{{ rails_environment }}-torquebox-cluster"
+
+# VPC Configuration
+vpc:
+  vpc_id: vpc-294c734c
+
+# Route53
+route53:
+  zone:
+    id: !!null
+
+# VPC NAT
+vpc_nat:
+  skip: false
+  instance_type: t2.micro
+
+# Skip Maestrano configuration
+maestrano:
+  skip: true
+
+# MnoHub Infrastructure Configuration
+mnohub:
+  skip: false
+  redis:
+    name: "{{ environment_name }}-mnohub"
+  auto_scaling_group:
+    min_size: 1
+    max_size: 2
+    desired_capacity: 1
+  elastic_load_balancer:
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+  launch_configuration:
+    instance_type: t2.small
+
+nex:
+  skip: true
+
+connec:
+  skip: false
+  redis:
+    name: "{{ environment_name }}-connec"
+  auto_scaling_group:
+    api:
+      min_size: 1
+      max_size: 2
+      desired_capacity: 1
+    jobs:
+      min_size: 1
+      max_size: 2
+      desired_capacity: 1
+  elastic_load_balancer:
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+  launch_configuration:
+    api:
+      instance_type: m3.medium
+    jobs:
+      instance_type: m3.medium
+
+impac:
+  skip: false
+  redis:
+    name: "{{ environment_name }}-impac"
+  auto_scaling_group:
+    min_size: 1
+    max_size: 2
+    desired_capacity: 1
+  elastic_load_balancer:
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+  launch_configuration:
+    instance_type: m3.medium
+
+mongo:
+  size: 10
+  elastic_load_balancer:
+    scheme: internal
+
+mnoe:
+  skip: true
+
+rds:
+  multi_zone: no
+  instance_type: db.t2.micro
+
+# Swapfile configuration
+swapfile_use_dd: True
+swapfile_size: "{{ (0.5 * ansible_memtotal_mb)|int }}"

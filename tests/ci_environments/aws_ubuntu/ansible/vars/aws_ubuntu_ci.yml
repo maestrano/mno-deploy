@@ -1,0 +1,223 @@
+#=======================================================================
+#=======================================================================
+# Application versions
+#=======================================================================
+#=======================================================================
+mnohub_version: latest
+connec_version: latest
+connec_folder: releases
+impac_version: latest
+impac_folder: releases
+nex_app_orchestrator_version: latest
+frontend_project: maestrano-enterprise
+frontend_version: latest
+dev_platform_version: latest
+
+# S3 Location of the Ansible configuration for this environment
+mno_deploy_configuration_bucket: mno-deploy-ci
+mno_deploy_configuration_path: /aws-ubuntu-config
+
+#=======================================================================
+#=======================================================================
+# AWS Keys
+#=======================================================================
+#=======================================================================
+# AWS Access Keys used to provision the infrastructure
+# These keys should be exported before running the provisioning
+# tasks (ec2-infra)
+aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+aws_region: "{{ lookup('env', 'AWS_REGION') }}"
+
+#=======================================================================
+#=======================================================================
+# General Environment configuration
+#=======================================================================
+#=======================================================================
+environment_name: ubuntu-ci
+rails_environment: uat
+
+timezone: Australia/Sydney
+aws_availability_zone1: "{{ aws_region }}a"
+aws_availability_zone2: "{{ aws_region }}b"
+aws_availability_zones: ["{{ aws_availability_zone1 }}", "{{ aws_availability_zone2 }}"]
+
+# default_base_ami: ami-e8f1c1ba # Ubuntu 14.04 (PV) - APSE1
+# default_base_ami: ami-7163104b # Ubuntu 14.04 (PV) - APSE2
+# default_base_ami: ami-d3daace9 # Red Hat Enterprise Linux 7.1 - APSE2
+default_base_ami: ami-25c00c46
+default_instance_type: t2.medium
+keypair: mno-deploy-ci
+
+# Open to the world - for testing only
+nat_inbound_ip_range: 0.0.0.0/0
+
+# Base DNS name
+dns:
+  base: "{{ rails_environment }}.{{ environment_name }}.{{ route53.zone.name }}"
+
+# List of user SSH keys
+ssh_users:
+  - { name: "ubuntu", file: "files/public_keys/arnaud.lachaume@maestrano.com" }
+
+#=======================================================================
+#=======================================================================
+# Infrastructure configuration
+#=======================================================================
+#=======================================================================
+# S3 Buckets
+s3_buckets:
+  public: mnohub-vpc-ci-public-assets
+  private: mnohub-vpc-ci-private-assets
+  torquebox: "{{ environment_name }}-{{ rails_environment }}-torquebox-cluster"
+
+# VPC Configuration
+vpc:
+  vpc_id: vpc-294c734c
+
+# Route53
+route53:
+  zone:
+    id: !!null
+
+# VPC NAT
+vpc_nat:
+  skip: false
+  instance_type: t2.micro
+
+# Maestrano configuration
+# Note: Maestrano website - should not be used as "MnoHub" anymore
+maestrano:
+  skip: true
+
+# MnoHub Infrastructure Configuration
+mnohub:
+  skip: false
+  redis:
+    name: "{{ environment_name }}-mnohub"
+  auto_scaling_group:
+    min_size: 1
+    max_size: 2
+    desired_capacity: 1
+  elastic_load_balancer:
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+      - protocol: https
+        load_balancer_port: 443
+        instance_protocol: http
+        instance_port: 80
+        ssl_certificate_id: "arn:aws:iam::647381683421:server-certificate/maestrano.io.wilcard-2016"
+  launch_configuration:
+    instance_type: c3.large
+    spot_price: 0.0235
+
+nex:
+  skip: true
+
+connec:
+  skip: false
+  redis:
+    name: "{{ environment_name }}-connec"
+  auto_scaling_group:
+    api:
+      min_size: 1
+      max_size: 2
+      desired_capacity: 1
+    jobs:
+      min_size: 1
+      max_size: 2
+      desired_capacity: 1
+  elastic_load_balancer:
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+      - protocol: https
+        load_balancer_port: 443
+        instance_protocol: http
+        instance_port: 80
+        ssl_certificate_id: "arn:aws:iam::647381683421:server-certificate/maestrano.io.wilcard-2016"
+  launch_configuration:
+    api:
+      instance_type: c3.large
+      spot_price: 0.0235
+    jobs:
+      instance_type: c3.large
+      spot_price: 0.0235
+
+impac:
+  skip: false
+  redis:
+    name: "{{ environment_name }}-impac"
+  auto_scaling_group:
+    min_size: 1
+    max_size: 2
+    desired_capacity: 1
+  elastic_load_balancer:
+    listeners:
+      - protocol: http
+        load_balancer_port: 80
+        instance_port: 80
+      - protocol: https
+        load_balancer_port: 443
+        instance_protocol: http
+        instance_port: 80
+        ssl_certificate_id: "arn:aws:iam::647381683421:server-certificate/maestrano.io.wilcard-2016"
+  launch_configuration:
+    instance_type: c3.large
+    spot_price: 0.0235
+
+mongo:
+  size: 10
+  elastic_load_balancer:
+    scheme: internal
+
+mnoe:
+  skip: true
+
+rds:
+  multi_zone: no
+  instance_type: db.t2.micro
+
+#=======================================================================
+#=======================================================================
+# Application Configuration
+#=======================================================================
+#=======================================================================
+# Maestrano configuration
+mnohub_config:
+  carrierwave:
+    public_bucket: cdn-ci-maestrano
+    private_bucket: private-assets-apse1-ci-maestrano
+    asset_host: dbu1g4tv4k5kk.cloudfront.net
+  general:
+    nex_host: !!null
+    http_enabled: true
+    delay_job: true
+    sync_intervall: 10 #seconds
+    payment_gateway_mode: test
+    apps_domain: "apps.uat.maestrano.io"
+    virtual_email_domain: "appmail.{{ maestrano.dns_record.record }}"
+    support_rate_pips: 2500
+    cdn_assets: true
+  private_dns:
+    scheme: https
+    host: uat.maestrano.io # TODO: Change when switching to VPC
+  open_exchange_rates:
+    app_id: d8091e280ec44002ae37ede2a63167d2
+
+# Connec! Configuration
+connec_config:
+  maestrano_database:
+    pool: 10
+  sidekiq:
+    worker_threads: 10
+    admin:
+      username: admin
+      password: 93938dkdjjf84j
+
+# Swapfile configuration
+swapfile_use_dd: True
+swapfile_size: "{{ (0.5 * ansible_memtotal_mb)|int }}"

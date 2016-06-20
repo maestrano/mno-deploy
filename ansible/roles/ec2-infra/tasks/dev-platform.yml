@@ -76,7 +76,7 @@
         delete_on_termination: true
   when: dev_platform.launch_configuration.spot_price is undefined or dev_platform.launch_configuration.spot_price is none
 
-- name: Create Developer Platform Launch Configuration
+- name: Create Developer Platform Launch Configuration (spot instances)
   ec2_lc:
     name: "{{ dev_platform.launch_configuration.name }}"
     key_name: "{{ dev_platform.launch_configuration.key_name }}"
@@ -93,7 +93,7 @@
         volume_size: 50
         device_type: gp2 # SSD
         delete_on_termination: true
-  when: dev_platform.launch_configuration.spot_price is not none
+  when: dev_platform.launch_configuration.spot_price is defined
 
 - name: Create Developer Platform Auto Scaling Group
   ec2_asg:

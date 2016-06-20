@@ -76,7 +76,7 @@
         delete_on_termination: true
   when: impac.launch_configuration.spot_price is undefined or impac.launch_configuration.spot_price is none
 
-- name: Create Impac! Launch Configuration
+- name: Create Impac! Launch Configuration (spot instances)
   ec2_lc:
     name: "{{ impac.launch_configuration.name }}"
     key_name: "{{ impac.launch_configuration.key_name }}"

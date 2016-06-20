@@ -7,13 +7,14 @@
   - [ "vars/{{ env_config }}.yml" ]
   - [ "vars/{{ env_config }}_secrets.yml" ]
   roles:
-    - common
+    - role: common
     - role: ntp
     - { role: swapfile, swapfile_swappiness: 10 }
-    - role: splunk
+    - { role: sumocollector, sumologic_collector_application_log_path: "{{ sumologic.mnohub.log_path }}", sumologic_host_name: "mnohub-{{ rails_environment }}", when: not(sumologic.skip) }
+    - { role: splunk }
     - { role: newrelic, when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
-    - jruby
+    - { role: jruby }
     - { role: jdauphant.nginx, keep_only_specified: true }
-    - mnohub
+    - { role: mnohub }
     - { role: logrotate, logrotate_scripts: [{name: sidekiq, path: "{{ deploy_directory }}/shared/log/sidekiq.log", options: "{{ logrotate.options }}"}] }
     - { role: logrotate, logrotate_scripts: [{name: mnohub, path: "{{ deploy_directory }}/shared/log/{{ rails_environment }}.log", options: "{{ logrotate.options }}"}] }

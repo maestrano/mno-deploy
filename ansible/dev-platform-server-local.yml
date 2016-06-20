@@ -11,7 +11,8 @@
     - role: ntp
     - { role: swapfile, swapfile_swappiness: 10 }
     - { role: newrelic, when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
-    - role: splunk
+    - { role: splunk }
+    - { role: sumocollector, sumologic_collector_application_log_path: "{{ sumologic.dev_platform.log_path }}", sumologic_host_name: "dev-platform-{{ rails_environment }}", when: not(sumologic.skip) }
     # - role: jruby # Switch to JRuby when rails 5 is stable
     - { role: rvm_io.rvm1-ruby, tags: ruby, rvm1_rubies: ['ruby-2.3.1'] }
     - { role: jdauphant.nginx, keep_only_specified: true }

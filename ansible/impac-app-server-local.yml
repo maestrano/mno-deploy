@@ -11,9 +11,10 @@
     - role: ntp
     - { role: swapfile, swapfile_swappiness: 10 }
     - { role: newrelic, when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
-    - role: splunk
-    - role: jruby
+    - { role: sumocollector, sumologic_collector_application_log_path: "{{ sumologic.impac.log_path }}", sumologic_host_name: "impac-{{ rails_environment }}", when: not(sumologic.skip) }
+    - { role: splunk }
+    - { role: jruby }
     - { role: jdauphant.nginx, keep_only_specified: true }
-    - role: impac
+    - { role: impac }
     - { role: logrotate, logrotate_scripts: [{name: impac, path: "{{ deploy_directory }}/shared/log/{{ rails_environment }}.log", options: "{{ logrotate.options }}"}] }
     - { role: logrotate, logrotate_scripts: [{name: newrelic, path: "{{ deploy_directory }}/shared/log/newrelic_agent.log", options: "{{ logrotate.options }}"}] }

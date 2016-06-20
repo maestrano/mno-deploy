@@ -17,8 +17,16 @@ server {
 
   try_files $uri/index.html $uri @{{ frontend_project }};
 
+  location ^~ /assets/ {
+    gzip_static on;
+    expires max;
+    add_header Cache-Control public;
+  }
+
   location @{{ frontend_project }} {
-    expires      1h;
+    expires -1;
+    add_header  Cache-Control "max-age=0, no-store, must-revalidate";
+
     proxy_cache  off;
     proxy_pass http://{{ frontend_project }};
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

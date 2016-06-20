@@ -7,15 +7,16 @@
   - [ "vars/{{ env_config }}.yml" ]
   - [ "vars/{{ env_config }}_secrets.yml" ]
   roles:
-    - common
+    - role: common
     - role: ntp
     - { role: swapfile, swapfile_swappiness: 10 }
     - { role: newrelic, when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
     - { role: newrelic-java, newrelic_app_name: "Torquebox Nex {{ rails_environment }}", when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
-    - role: splunk
-    - torquebox
+    - { role: sumocollector, sumologic_collector_application_log_path: "{{ sumologic.nex.log_path }}", sumologic_host_name: "nex-{{ rails_environment }}", when: not(sumologic.skip) }
+    - { role: splunk }
+    - { role: torquebox }
     - { role: jdauphant.nginx, keep_only_specified: true }
-    - nex
+    - { role: nex }
     - { role: logrotate, logrotate_scripts: [{name: torquebox, path: "/var/log/torquebox/torquebox.log", options: "{{ logrotate.options_torquebox }}"}] }
     - { role: logrotate, logrotate_scripts: [{name: nex, path: "{{ deploy_directory }}/shared/log/{{ rails_environment }}.log", options: "{{ logrotate.options_torquebox }}"}] }
     - { role: logrotate, logrotate_scripts: [{name: newrelic, path: "{{ deploy_directory }}/shared/log/newrelic_agent.log", options: "{{ logrotate.options_torquebox }}"}] }

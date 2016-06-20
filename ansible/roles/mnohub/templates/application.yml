@@ -27,7 +27,7 @@ default_tenant_host: {{ frontend_config.public_dns.host }}
 {% endif %}
 
 # Connection credentials for Nex!
-{% if nex_config is defined %}
+{% if nex_config is defined and nex_config.mnohub is defined %}
 mcluster_admin_token: {{ nex_config.mnohub.key }}
 mcluster_admin_password: "{{ nex_config.mnohub.secret }}"
 {% endif %}
@@ -58,7 +58,8 @@ braintree_private_key: {{ mnohub_config.braintree.private_key }}
 # Newrelic api key
 newrelic_license_key: {{ newrelic_license_key }}
 
-# DevPlatform shared secret
+# DevPlatform
+DEV_PLATFORM_ENDPOINT: {{ dev_platform_config.public_dns.scheme }}://{{ dev_platform_config.public_dns.host }}
 {% if dev_platform_config.shared_secret is defined %}
 DEV_PLATFORM_SHARED_SECRET: {{ dev_platform_config.shared_secret }}
 {% endif %}

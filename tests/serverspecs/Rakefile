@@ -1,0 +1,51 @@
+require 'rake'
+require 'yaml'
+require 'json'
+require 'rspec/core/rake_task'
+
+# Collect all deployed environments
+root_path = File.expand_path(File.join(File.dirname(__FILE__),'..'))
+deployed_envs = {}
+Dir.glob(File.join(root_path,'tmpdeploy','*')).select {|f| File.directory? f}.each do |d|
+  deployed_envs[File.basename(d)] = {
+    'path' => d,
+    'inventory' => File.join(d,'inventory/inventory.json'),
+    'ssh_key' => File.join(d,'inventory/key-ssh.pem')
+  }
+end
+
+# Default task
+task :default => [:spec]
+
+desc "Run serverspec to all hosts"
+task :spec => 'serverspec:all'
+
+namespace :serverspec do
+  task_list = []
+
+  # Create a task for each host of each inventory group of each
+  # deployed environment
+  deployed_envs.each do |env_name,env_paths|
+    next unless File.exists?(env_paths['inventory'])
+    inventory = JSON.load(File.read(env_paths['inventory']))
+
+    inventory.keys.each do |group|
+      next unless inventory[group.to_s]['hosts']
+      next unless File.directory?("spec/#{group}")
+
+      inventory[group.to_s]['hosts'].each do |host|
+        task_name = "#{env_name}:#{group}:#{host}"
+        RSpec::Core::RakeTask.new(task_name) do |t|
+          ENV['TARGET_HOST'] = host
+          ENV['TARGET_HOST_USER'] = inventory[group.to_s]['user']
+          ENV['SRVSPEC_INVENTORY_FILE'] = env_paths['inventory']
+          ENV['SRVSPEC_SSH_KEY'] = env_paths['ssh_key']
+          t.pattern = "spec/{#{group}}/*_spec.rb"
+        end
+        task_list << "serverspec:#{task_name}"
+      end
+    end
+  end
+
+  task :all => task_list
+end

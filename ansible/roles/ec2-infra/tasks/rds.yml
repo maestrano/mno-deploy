@@ -24,7 +24,7 @@
     username: "{{ rds.username }}"
     password: "{{ rds.password }}"
     wait: yes
-    wait_timeout: 1200
+    wait_timeout: 2400
     aws_access_key: "{{ aws_access_key }}"
     aws_secret_key: "{{ aws_secret_key }}"
     aws_region: "{{ lookup('env', 'AWS_REGION') }}"

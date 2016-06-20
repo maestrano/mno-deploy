@@ -1,0 +1,170 @@
+---
+
+- name: Destroy the VPC infrastructure
+  hosts: localhost
+  connection: local
+  vars_files:
+  - [ "vars/{{ env_config }}.yml" ]
+  - [ "vars/{{ env_config }}_secrets.yml" ]
+  tasks:
+    #=======================================
+    # Connec!
+    #=======================================
+    - name: Destroy Connec! Auto Scaling Group Background Jobs
+      ec2_asg:
+        name: "{{ connec.auto_scaling_group.jobs.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+      async: 300
+      poll: 0
+
+    - name: Destroy Connec! Launch Configuration Background Jobs
+      ec2_lc:
+        name: "{{ connec.launch_configuration.jobs.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+
+    - name: Destroy Connec! Auto Scaling API
+      ec2_asg:
+        name: "{{ connec.auto_scaling_group.api.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+      async: 300
+      poll: 0
+
+    - name: Destroy Connec! Launch Configuration API
+      ec2_lc:
+        name: "{{ connec.launch_configuration.api.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+
+    - name: Destroy Connec! ELB
+      ec2_elb_lb:
+        name: "{{ connec.elastic_load_balancer.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+
+    - name: Destroy Connec Redis Store
+      elasticache:
+        name: "{{ connec.redis.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+      ignore_errors: True
+      async: 300
+      poll: 0
+
+    #=======================================
+    # Impac!
+    #=======================================
+    - name: Destroy Impac! Auto Scaling Group
+      ec2_asg:
+        name: "{{ impac.auto_scaling_group.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+      async: 300
+      poll: 0
+
+    - name: Destroy Impac! Launch Configuration
+      ec2_lc:
+        name: "{{ impac.launch_configuration.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+
+    - name: Destroy Impac! ELB
+      ec2_elb_lb:
+        name: "{{ impac.elastic_load_balancer.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+
+    - name: Destroy Impac Redis Store
+      elasticache:
+        name: "{{ impac.redis.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+      ignore_errors: True
+      async: 300
+      poll: 0
+
+    #=======================================
+    # MnoHub
+    #=======================================
+    - name: Destroy MnoHub Auto Scaling Group
+      ec2_asg:
+        name: "{{ mnohub.auto_scaling_group.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+      async: 300
+      poll: 0
+
+    - name: Destroy MnoHub Launch Configuration
+      ec2_lc:
+        name: "{{ mnohub.launch_configuration.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+
+    - name: Create MnoHub ELB
+      ec2_elb_lb:
+        name: "{{ mnohub.elastic_load_balancer.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+
+    - name: Destroy MnoHub Redis Store
+      elasticache:
+        name: "{{ mnohub.redis.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+      ignore_errors: True
+      async: 300
+      poll: 0
+
+    #=======================================
+    # MongoDB
+    #=======================================
+    - name: Destroy Mongo Cluster
+      ec2:
+        region: "{{ aws_region }}"
+        instance_type: "{{ mongo.launch_configuration.instance_type }}"
+        vpc_subnet_id: "{{ mongo.cluster.vpc_zone_identifier[0] }}"
+        image: "{{ mongo.launch_configuration.image_id }}"
+        count_tag:
+          - Name: "{{ mongo.cluster.tags.Name }}"
+          - Environment: "{{ environment_name }}"
+        exact_count: 0
+
+    #=======================================
+    # Rundeck
+    #=======================================
+    - name: Destroy Rundeck instance
+      ec2:
+        region: "{{ aws_region }}"
+        image: "{{ rundeck.image_id }}"
+        exact_count: 0
+        count_tag: { "Name": "{{ vpc_base_name }}-rundeck" }
+
+    - name: Destroy Rundeck ELB
+      ec2_elb_lb:
+        name: "{{ rundeck.elastic_load_balancer.name }}"
+        region: "{{ aws_region }}"
+        state: absent
+
+    #=======================================
+    # RDS
+    #=======================================
+    - name: Destroy RDS instance
+      rds:
+        command: delete
+        instance_name: "{{ rds.name }}"
+      async: 600
+      poll: 0
+
+    #=======================================
+    # NAT/Jumpbox
+    #=======================================
+    - name: Destroy NAT/Jumpbox
+      ec2:
+        region: "{{ aws_region }}"
+        image: "ami-1234"
+        count_tag:
+          - Name: "{{ vpc_base_name }}-nat"
+          - Environment: "{{ environment_name }}"
+        exact_count: 0

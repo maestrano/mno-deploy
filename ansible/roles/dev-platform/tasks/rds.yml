@@ -14,7 +14,7 @@
 
 - name: Developer Platform | Create RDS database
   mysql_db:
-    login_host: "{{ rds.endpoint }}"
+    login_host: "{{ dev_platform_config.database.hostname }}"
     login_user: "{{ rds.username }}"
     login_password: "{{ rds.password }}"
     login_port: 3306
@@ -25,7 +25,7 @@
 
 - name: Developer Platform | Create RDS database user
   mysql_user:
-    login_host: "{{ rds.endpoint }}"
+    login_host: "{{ dev_platform_config.database.hostname }}"
     login_user: "{{ rds.username }}"
     login_password: "{{ rds.password }}"
     login_port: 3306
