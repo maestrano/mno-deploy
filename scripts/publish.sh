@@ -14,7 +14,7 @@
 : ${CI_BUILD_NUMBER?"Need to set variable: CI_BUILD_NUMBER"}
 
 # S3 bucket and path
-bucket_location=mnoe-packages/mno-infrastructure/${CI_BRANCH}
+bucket_location=pwc-next-uat-mnoe-dropbox/mno-infrastructure/${CI_BRANCH}
 
 # Download AWS CLI
 pip install awscli
