@@ -10,7 +10,7 @@ Automatic setup of new servers launched by the ASGs
 
 ## Infrastructure configuration and setup
 The default cloud provider used to deploy the Maestrano platform is Amazon Web Services running inside a VPC. The different components of the platform are deployed independently (frontend, mnohub, nex!, connec!, impac!)
-[ ![Architecture diagram](https://raw.githubusercontent.com/maestrano/mno-deploy/develop/architecture_diagram.png)]
+![Architecture diagram](https://raw.githubusercontent.com/maestrano/mno-deploy/develop/architecture_diagram.png)
 
 ### Setup a new environment
 This set of scripts is generic and needs to be configured on a per environment basis. The recommended approach is to create a new project to pull down the deployment scripts and merge them with your local configuration.
@@ -31,12 +31,12 @@ Create a directory structure as follows and copy the scripts files `setup_infras
 
 ### Ansible configuration
 #### Basic configuration
-Copy the default configuration file from `mno-deploy/ansible/vars/example.yml` to `ansible/vars/myenv.yml` and set the values. A complete list of configuration properties is defined in the file `ansible/group_vars/all`.
+Copy the default configuration file from  [mno-deploy/ansible/vars/example.yml](https://github.com/maestrano/mno-deploy/blob/develop/ansible/vars/example.yml) to `ansible/vars/myenv.yml` and set the values. A complete list of configuration properties is defined in the file `ansible/group_vars/all`.
 
-An example of configuration file is available under `mno-deploy/tests/ci_environments/aws_ubuntu/ansible/vars/aws_ubuntu_ci.yml`
+An example of configuration file is available under [mno-deploy/tests/ci_environments/aws_ubuntu/ansible/vars/aws_ubuntu_ci.yml](https://github.com/maestrano/mno-deploy/blob/develop/tests/ci_environments/aws_ubuntu/ansible/vars/aws_ubuntu_ci.yml)
 
 #### Passwords and secrets
-Copy the default secrets file from `mno-deploy/ansible/vars/example_secrets.yml` to `ansible/vars/myenv_secrets.yml` and update with your passwords and secrets. This file will be encrypted using ansible vault commands:
+Copy the default secrets file from [mno-deploy/ansible/vars/example_secrets.yml](https://github.com/maestrano/mno-deploy/blob/develop/ansible/vars/example_secrets.yml) to `ansible/vars/myenv_secrets.yml` and update with your passwords and secrets. This file will be encrypted using ansible vault commands:
 ansible-vault encrypt `ansible/vars/myenv_secrets.yml`
 Store the ansible vault password in a text file that will be reused as part of the deployment scripts to decrypt this file at runtime.
 

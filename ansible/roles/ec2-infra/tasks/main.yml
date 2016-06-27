@@ -1,4 +1,7 @@
 ---
+- debug: msg="AWS_REGION {{ lookup('env', 'AWS_REGION') }}"
+- debug: msg="AWS_DEFAULT_REGION {{ lookup('env', 'AWS_DEFAULT_REGION') }}"
+- debug: msg="COMPUTED SHIT {{ lookup('env', 'AWS_DEFAULT_REGION') if not lookup('env', 'AWS_REGION') != '' else lookup('env', 'AWS_REGION') }}"
 
 - include: vpc.yml
   when: not vpc.skip

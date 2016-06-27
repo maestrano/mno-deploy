@@ -29,7 +29,7 @@ dev_platform_version: changeme
 # tasks (ec2-infra)
 aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
 aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
-aws_region: "{{ lookup('env', 'AWS_REGION') }}"
+aws_region: "{{ lookup('env', 'AWS_DEFAULT_REGION') if lookup('env', 'AWS_REGION') == '' else lookup('env', 'AWS_REGION') }}"
 
 # These keys are used by the EC2 instances to retrieve applications packages
 # such as Connec!, Impac! etc. from the 'mnoe-packages' S3 bucket
