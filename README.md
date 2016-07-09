@@ -68,6 +68,7 @@ Follow the Ansible setup steps on screen and verify the AWS infrastructure has b
 
 ## Components configuration
 ### Common configuration
+The tasks defined under the role `common` will be executed on all the infrastructure compoenents.
 #### User ssh keys
 To add SSH keys to the instances, you need to add the keys to the folder `ansible/files/public_keys` and them to the Ansible configuration:
 
@@ -79,7 +80,8 @@ ssh_users:
 
 ### Mnohub configuration
 #### Xero certificates
-Xero certificate files must be added to `ansible/files/xero_certs/RAILS_ENVIRONMENT/`
+To support Xero API Partner access, certificate files must be added to `ansible/files/xero_certs/RAILS_ENVIRONMENT/`
+The list of file to include are:
 - privatekey.pem
 - entrust-cert.pem
 - entrust-private-nopass.pem

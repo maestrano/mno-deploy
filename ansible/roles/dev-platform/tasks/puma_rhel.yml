@@ -1,7 +1,0 @@
----
-
-- name: Developer Platform | Add /etc/systemd/system/puma.service
-  template: src=puma.service dest=/etc/systemd/system/puma.service force=yes mode=0755
-
-- name: Developer Platform | Add puma to systemd
-  service: name=puma state=started enabled=yes

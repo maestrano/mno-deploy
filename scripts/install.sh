@@ -3,7 +3,7 @@
 #==============================================================
 # Setup of a Maestrano component instance
 # Performs an installation of the required packages and calls the ansible scripts
-# 
+#
 # Supports Debian and CentOS distributions
 # Usage: sh install.sh [maestrano_component] [env_config]
 # eg: sh install.sh connec-app-server-ec2 uat
@@ -31,7 +31,7 @@ do_install() {
   apt-get -y upgrade
   apt-get -y install build-essential
   apt-get -q -y --no-install-recommends install unattended-upgrades git python-yaml libyaml-dev python-jinja2 python-httplib2 python-keyczar python-dev python-pip
-  pip install -I pycrypto ansible
+  pip install pycrypto ansible
 
   # Run Ansible
   cd /etc/ansible

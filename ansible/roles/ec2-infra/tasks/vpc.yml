@@ -31,13 +31,17 @@
 
 # Combine VPC variables into one
 - set_fact: created_vpc="{{ new_vpc if vpc.vpc_id is undefined or vpc.vpc_id is none else existing_vpc }}"
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
 
 # Sort the list of subnets using the same order as the one specified by vpc.subnets
 - set_fact: sorted_subnet_list=''
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
 - set_fact: sorted_subnet_list="{{sorted_subnet_list | list}} + {{created_vpc.subnets | selectattr("cidr", "equalto", item.cidr) | list}}"
   with_items: "{{ vpc.subnets }}"
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
 - set_fact:
     created_vpc: "{{ created_vpc | combine({'subnets': sorted_subnet_list}) }}"
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
 
 - name: Create VPC subnets
   ec2_vpc_subnet:

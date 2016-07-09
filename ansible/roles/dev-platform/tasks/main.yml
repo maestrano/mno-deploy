@@ -19,9 +19,9 @@
   include: deploy.yml
 
 - name: Developer Platform | Run/Reload Puma (Debian)
-  include: puma_deb.yml
+  include: runtime_deb.yml
   when: ansible_os_family == "Debian"
 
 - name: Developer Platform | Run/Reload Puma (RHEL)
-  include: puma_rhel.yml
+  include: runtime_rhel.yml
   when: ansible_os_family == "RedHat"

@@ -1,0 +1,25 @@
+---
+
+- name: MnoHub | Download GeoLoc database
+  get_url: url=http://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz dest={{ deploy_directory }}/shared/geocoder/GeoLite2-City.mmdb.gz
+
+- name: MnoHub | Unarchive GeoLoc database
+  shell: "gzip -d {{ deploy_directory }}/shared/geocoder/GeoLite2-City.mmdb.gz"
+  args:
+    creates: "{{ deploy_directory }}/shared/geocoder/GeoLite2-City.mmdb"
+
+- name: MnoHub | Create symlink
+  file:
+    src: "{{ deploy_directory }}/shared/geocoder/GeoLite2-City.mmdb"
+    dest: "{{ deploy_directory }}/shared/geocoder/geodb.mmdb"
+    state: link
+    force: yes
+
+- name: MnoHub | Set GeoLoc database permissions
+  file:
+    path: "{{ deploy_directory }}/shared/geocoder"
+    mode: 0755
+    owner: deployer
+    group: deployer
+    state: directory
+    recurse: yes

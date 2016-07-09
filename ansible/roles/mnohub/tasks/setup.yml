@@ -66,6 +66,7 @@
     - config
     - vendor_bundle
     - cluster_config
+    - geocoder
 
 - name: MnoHub | Configure splunk forwarder inputs
   shell: "/opt/splunkforwarder/bin/splunk add monitor {{ item.monitor }} -index {{ item.index }} -hostname {{ ansible_hostname }} -auth {{ splunk.username }}:{{ splunk.password }}"
@@ -73,3 +74,6 @@
   with_items: "{{ splunk.mnohub.inputs }}"
   tags: [splunk-configure]
   ignore_errors: true
+
+- name: MnoHub | Download deocoder database
+  include: geocoder_database.yml

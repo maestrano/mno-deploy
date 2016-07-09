@@ -1,0 +1,13 @@
+---
+
+- name: Developer Platform | Add /etc/init/puma.conf
+  template: src=etc_init_puma.conf dest=/etc/init/puma.conf force=yes mode=0755
+
+- name: Developer Platform | Add /etc/init/sidekiq.conf
+  template: src=etc_init_sidekiq.conf dest=/etc/init/sidekiq.conf force=yes mode=0755
+
+- name: Developer Platform | Add puma to upstart
+  service: name=puma state=restarted enabled=yes
+
+- name: Developer Platform | Add sidekiq to upstart
+  service: name=sidekiq state=restarted enabled=yes

@@ -165,7 +165,7 @@ common: &default_settings
     # Error collector is enabled by default. Set this to false to turn
     # it off. This feature is only available at the Professional and above
     # product levels.
-    enabled: false
+    enabled: true
 
     # To stop specific errors from reporting to New Relic, set this property
     # to comma-separated values.  Default is to ignore routing errors,

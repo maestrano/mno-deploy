@@ -54,10 +54,10 @@
 - name: Developer Platform | Install puma
   command: gem install puma
 
-- include: puma_deb.yml
+- include: runtime_deb.yml
   when: ansible_os_family == "Debian"
 
-- include: puma_rhel.yml
+- include: runtime_rhel.yml
   when: ansible_os_family == "RedHat"
 
 - name: Developer Platform | Copy puma.rb config

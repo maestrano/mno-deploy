@@ -1,0 +1,27 @@
+[Unit]
+Description=Sidekiq workers server
+After=network.target
+
+[Service]
+Type=simple
+User=deployer
+WorkingDirectory={{ deploy_directory }}/current
+Environment=PATH=/opt/jruby/current/bin:$PATH
+Environment=RAILS_ENV={{ rails_environment }}
+Environment=JRUBY_OPTS="-J-Xms{{ dev_platform_config.java_opts.xms }} -J-Xmx{{ dev_platform_config.java_opts.xmx }} -J-XX:MaxPermSize={{ dev_platform_config.java_opts.max_perm_size }}"
+
+{% if proxy_host is defined and proxy_port is defined %}
+Environment=JRUBY_OPTS="$JRUBY_OPTS -J-Dhttp.proxyHost={{ proxy_host }} -J-Dhttp.proxyPort={{ proxy_port }} -J-Dhttp.nonProxyHosts={{ proxy_ignore_java }} -J-Dhttps.proxyHost={{ proxy_host }} -J-Dhttps.proxyPort={{ proxy_port }}"
+Environment=http_proxy=http://{{ proxy_host }}:{{ proxy_port }}
+Environment=https_proxy=http://{{ proxy_host }}:{{ proxy_port }}
+Environment=no_proxy={{ proxy_ignore }}
+{% endif %}
+
+PIDFile={{ deploy_directory }}/shared/pids/puma.pid
+TimeoutSec=15
+Restart=always
+
+ExecStart=/opt/jruby/current/bin/jruby -S bundle exec sidekiq -c {{ dev_platform_config.sidekiq_worker_threads }} -L {{ deploy_directory }}/shared/log/sidekiq.log
+
+[Install]
+WantedBy=multi-user.target

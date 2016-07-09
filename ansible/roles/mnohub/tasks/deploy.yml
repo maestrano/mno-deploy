@@ -109,24 +109,6 @@
     - entrust-private-nopass.pem
   tags: [xero]
 
-- name: MnoHub | Symbolic link to log directory
-  file:
-    src: "{{ deploy_directory }}/shared/log"
-    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/log"
-    owner: deployer
-    group: deployer
-    state: link
-    force: yes
-
-- name: MnoHub | Set log directory permissions
-  file:
-    path: "{{ deploy_directory }}/shared/log"
-    mode: 0755
-    owner: deployer
-    group: deployer
-    state: directory
-    recurse: yes
-
 - name: MnoHub | Set directory permissions
   file:
     path: "{{ deploy_directory }}/releases/{{ release_folder }}"
@@ -181,3 +163,29 @@
     group: deployer
     state: link
     force: yes
+
+- name: MnoHub | Clean directories
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/{{ item }}"
+    state: absent
+  with_items:
+    - log
+    - tmp
+    - solr
+    - geocoder
+    - downloads
+
+- name: MnoHub | Symbolic links to shared directories
+  file:
+    src: "{{ deploy_directory }}/shared/{{ item }}"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/{{ item }}"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+  with_items:
+    - log
+    - tmp
+    - solr
+    - geocoder
+    - downloads

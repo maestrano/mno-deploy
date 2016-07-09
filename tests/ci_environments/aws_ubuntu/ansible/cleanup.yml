@@ -15,8 +15,8 @@
         name: "{{ connec.auto_scaling_group.jobs.name }}"
         region: "{{ aws_region }}"
         state: absent
-      async: 300
-      poll: 0
+#      async: 300
+#      poll: 0
 
     - name: Destroy Connec! Launch Configuration Background Jobs
       ec2_lc:
@@ -29,8 +29,8 @@
         name: "{{ connec.auto_scaling_group.api.name }}"
         region: "{{ aws_region }}"
         state: absent
-      async: 300
-      poll: 0
+#      async: 300
+#      poll: 0
 
     - name: Destroy Connec! Launch Configuration API
       ec2_lc:
@@ -50,8 +50,8 @@
         region: "{{ aws_region }}"
         state: absent
       ignore_errors: True
-      async: 300
-      poll: 0
+#      async: 300
+#      poll: 0
 
     #=======================================
     # Impac!
@@ -61,8 +61,8 @@
         name: "{{ impac.auto_scaling_group.name }}"
         region: "{{ aws_region }}"
         state: absent
-      async: 300
-      poll: 0
+#      async: 300
+#      poll: 0
 
     - name: Destroy Impac! Launch Configuration
       ec2_lc:
@@ -82,8 +82,8 @@
         region: "{{ aws_region }}"
         state: absent
       ignore_errors: True
-      async: 300
-      poll: 0
+#      async: 300
+#      poll: 0
 
     #=======================================
     # MnoHub
@@ -93,8 +93,8 @@
         name: "{{ mnohub.auto_scaling_group.name }}"
         region: "{{ aws_region }}"
         state: absent
-      async: 300
-      poll: 0
+#      async: 300
+#      poll: 0
 
     - name: Destroy MnoHub Launch Configuration
       ec2_lc:
@@ -114,8 +114,8 @@
         region: "{{ aws_region }}"
         state: absent
       ignore_errors: True
-      async: 300
-      poll: 0
+#      async: 300
+#      poll: 0
 
     #=======================================
     # MongoDB
