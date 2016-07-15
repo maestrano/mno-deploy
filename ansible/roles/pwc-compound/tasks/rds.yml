@@ -1,0 +1,38 @@
+---
+
+- name: PWC Compound | Install packages
+  apt: "name={{ item }} state=present update_cache=yes"
+  with_items:
+    - python-mysqldb
+  when: ansible_os_family == "Debian"
+
+- name: PWC Compound | Install packages
+  yum: "name={{ item }} state=present"
+  with_items:
+    - MySQL-python
+  when: ansible_os_family == "RedHat"
+
+- name: PWC Compound | Create RDS database
+  mysql_db:
+    login_host: "{{ rds.endpoint }}"
+    login_user: "{{ rds.username }}"
+    login_password: "{{ rds.password }}"
+    login_port: 3306
+    collation: utf8_general_ci
+    encoding: utf8
+    name: "{{ mnoe_database_name }}"
+    state: present
+  when: not rds.skip
+
+- name: PWC Compound | Create RDS database user
+  mysql_user:
+    login_host: "{{ rds.endpoint }}"
+    login_user: "{{ rds.username }}"
+    login_password: "{{ rds.password }}"
+    login_port: 3306
+    name: "{{ mnoe_database_username }}"
+    host: '%'
+    password: "{{ mnoe_database_password }}"
+    priv: "{{ mnoe_database_name }}.*:ALL,GRANT"
+    state: present
+  when: not rds.skip

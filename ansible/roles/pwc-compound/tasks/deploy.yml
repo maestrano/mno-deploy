@@ -1,0 +1,115 @@
+---
+
+- name: PWC Compound | Release folder
+  set_fact: release_folder="{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
+
+- name: PWC Compound | Download application from S3 ({{ compound_project }}-{{ compound_version }}.tar.gz)
+  s3:
+    bucket: "{{ mno_pkgs_bucket }}"
+    object: "{{ s3_file }}"
+    dest: "{{ deploy_directory }}/{{ compound_project }}-{{ compound_version }}.tar.gz"
+    mode: get
+    region: "{{ mno_pkgs_s3_aws_region }}"
+    aws_access_key: "{{ mno_pkgs_s3_aws_access_key }}"
+    aws_secret_key: "{{ mno_pkgs_s3_aws_secret_key }}"
+
+- name: PWC Compound | Replace version
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    state: absent
+
+- name: PWC Compound | Create version directory (/apps/mnoe/releases/XXX)
+  file: path={{ deploy_directory }}/releases/{{ release_folder }} owner=deployer group=deployer state=directory
+
+- name: PWC Compound | Extract current version
+  command: "tar -xzf {{ deploy_directory }}/{{ compound_project }}-{{ compound_version }}.tar.gz -C {{ deploy_directory }}/releases/{{ release_folder }}"
+
+- name: PWC Compound | Clean up tar file
+  file:
+    path: "{{ deploy_directory }}/{{ compound_project }}-{{ compound_version }}.tar.gz"
+    state: absent
+
+- name: PWC Compound | Clean up gems
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/bundle"
+    state: absent
+
+- name: PWC Compound | Clean up gems
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor"
+    state: directory
+
+- name: PWC Compound | Database file database.yml
+  template:
+    src: database.yml
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/database.yml"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+
+  #- name: PWC Compound | Replace Envvars
+  #  file:
+  #    path: "{{ deploy_directory }}/shared/envvars"
+  #    state: absent
+
+- name: PWC Compound | Set directory permissions
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    mode: 0755
+    owner: deployer
+    group: deployer
+    state: directory
+    recurse: yes
+
+- name: PWC Compound | Symbolic link to gems
+  file:
+    src: "{{ deploy_directory }}/shared/vendor_bundle"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/bundle"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+
+- name: PWC Compound | Run bundle install
+  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle install --path={{ deploy_directory }}/shared/vendor_bundle --gemfile={{ deploy_directory }}/releases/{{ release_folder }}/Gemfile --deployment --without development test"
+  sudo_user: deployer
+  environment: "{{ default_environment }}"
+
+- name: PWC Compound | Replace previous version
+  file:
+    path: "{{ deploy_directory }}/current"
+    state: absent
+
+- name: PWC Compound | Symbolic link to current version
+  file:
+    src: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    dest: "{{ deploy_directory }}/current"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+
+- name: PWC Compound | Clean directories
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/{{ item }}"
+    state: absent
+  with_items:
+    - log
+    - tmp
+    - downloads
+
+- name: PWC Compound | Symbolic links to shared directories
+  file:
+    src: "{{ deploy_directory }}/shared/{{ item }}"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/{{ item }}"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+  with_items:
+    - log
+    - tmp
+
+- name: PWC Compound | Restart puma service
+  service: name=puma state=restarted

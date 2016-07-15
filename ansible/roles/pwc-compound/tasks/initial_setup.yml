@@ -1,0 +1,104 @@
+---
+
+- name: PWC Compound | Install packages
+  apt: "name={{ item }} state=present update_cache=yes"
+  with_items:
+    - curl
+    - libcurl3
+    - libcurl3-gnutls
+    - libcurl4-openssl-dev
+    - libmysqlclient-dev
+    - libsqlite3-dev
+    - nodejs
+  when: ansible_os_family == "Debian"
+
+- name: PWC Compound | Install packages
+  yum: "name={{ item }} state=present update_cache=yes"
+  with_items:
+    - curl
+    - nodejs
+  when: ansible_os_family == "RedHat"
+
+- name: PWC Compound | Create deployment user
+  user: name=deployer comment="Application deployment user"
+
+- name: PWC Compound | Add deployer user to sudoers
+  lineinfile: dest=/etc/sudoers regexp="deployer ALL" line="deployer ALL=(ALL) NOPASSWD:ALL" state=present
+
+- name: PWC Compound | Create deployment directory
+  file: path={{deploy_directory}} owner=deployer group=deployer state=directory
+
+- name: PWC Compound | Make shared directories
+  file: path={{deploy_directory}}/shared/{{item}} group=deployer owner=deployer state=directory
+  with_items:
+    - tmp
+    - log
+    - public
+    - bundle
+    - bin
+    - config
+    - pids
+    - sockets
+    - vendor_bundle
+
+  #- name: PWC Compound | Install bundler
+  #command: gem install bundler
+
+- name: PWC Compound | Envvars shared/envvars
+  template:
+    src: envvars.j2
+    dest: "{{ deploy_directory }}/shared/envvars"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: PWC Compound | Install puma
+  command: gem install puma
+
+- include: puma_deb.yml
+  when: ansible_os_family == "Debian"
+
+- include: puma_rhel.yml
+  when: ansible_os_family == "RedHat"
+
+- name: PWC Compound | Copy puma.rb config
+  template: src=puma.rb dest={{deploy_directory}}/shared/config/puma.rb owner=deployer group=deployer mode=0755
+
+- name: Compound App | Nginx default site deactivation
+  file: path=/etc/nginx/sites-enabled/default.conf state=absent
+
+- name: Compound App | Nginx site configuration
+  template: "src=etc-nginx-compound dest=/etc/nginx/sites-available/{{ compound_project }}"
+  register: nginxconfig
+
+- name: Frontend App | Nginx certificates directory
+  file: path=/etc/nginx/certificates state=directory
+  when: ssl_internal_cert is defined and ssl_internal_key is defined
+
+- name: Compound App | Nginx SSL Certificate
+  template: "src=etc-nginx-compound-ssl-cert dest=/etc/nginx/certificates/{{ compound_project }}.crt"
+  register: nginxsslcert
+  when: ssl_internal_cert is defined and ssl_internal_key is defined
+
+- name: Compound App | Nginx SSL Certificate Key
+  template: "src=etc-nginx-compound-ssl-key dest=/etc/nginx/certificates/{{ compound_project }}.key"
+  register: nginxsslkey
+  when: ssl_internal_cert is defined and ssl_internal_key is defined
+
+- name: Compound App | Nginx site activation
+  file:
+    src: "/etc/nginx/sites-available/{{ compound_project }}"
+    dest: "/etc/nginx/sites-enabled/{{ compound_project }}"
+    state: link
+    force: yes
+
+- name: PWC Compound | Nginx restart
+  shell: service nginx restart
+  when: nginxconfig.changed or (nginxsslcert is defined and nginxsslcert.changed) or (nginxsslkey is defined and nginxsslkey.changed)
+
+- name: PWC Compound | Configure splunk forwarder inputs
+  shell: "/opt/splunkforwarder/bin/splunk add monitor {{ item.monitor }} -index {{ item.index }} -hostname {{ ansible_hostname }} -auth {{ splunk.username }}:{{ splunk.password }}"
+  when: not splunk.skip
+  with_items: "{{ splunk.mno_enterprise.inputs }}"
+  tags: [splunk-configure]
+  ignore_errors: true

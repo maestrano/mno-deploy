@@ -1,0 +1,22 @@
+[Unit]
+Description=Puma application server
+After=network.target
+
+[Service]
+Type=simple
+User=deployer
+WorkingDirectory={{ deploy_directory }}/current
+Environment=RAILS_ENV={{ rails_environment }}
+{% if proxy_host is defined and proxy_port is defined %}
+Environment=http_proxy=http://{{ proxy_host }}:{{ proxy_port }}
+Environment=https_proxy=http://{{ proxy_host }}:{{ proxy_port }}
+Environment=no_proxy={{ proxy_ignore }}
+{% endif %}
+PIDFile={{ deploy_directory }}/shared/pids/puma.pid
+TimeoutSec=15
+Restart=always
+
+ExecStart=/usr/local/bin/bundle exec puma -C {{ deploy_directory }}/shared/config/puma.rb
+
+[Install]
+WantedBy=multi-user.target

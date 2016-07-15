@@ -1,0 +1,54 @@
+---
+
+- name: PWC Compound | Detect if initial setup
+  stat:
+    path: "{{ deploy_directory }}"
+  register: deploy_directory_path
+
+- name: PWC Compound | Setup RDS instance
+  include: rds.yml
+
+- name: PWC Compound | Initial application setup
+  include: initial_setup.yml
+
+- name: PWC Compound | Deploy application version
+  include: deploy.yml
+  tags: [deploy]
+
+- name: PWC Compound | Deploy application version
+  include: deploy.yml
+
+- name: PWC Compound | Gathering EC2 facts
+  action: ec2_facts
+  tags: [deploy]
+
+- name: PWC Compound | Instance De-register
+  ec2_elb:
+    ec2_access_key: "{{ infra_ec2_aws_access_key }}"
+    ec2_secret_key: "{{ infra_ec2_aws_access_secret }}"
+    ec2_region: "{{ infra_ec2_aws_region }}"
+    instance_id: "{{ ansible_ec2_instance_id }}"
+    state: absent
+  when: infra_ec2_aws_access_key is defined
+  tags: [deploy]
+
+- name: PWC Compound | Run/Reload Puma (Debian)
+  include: puma_deb.yml
+  when: ansible_os_family == "Debian"
+
+- name: PWC Compound | Run/Reload Puma (RHEL)
+  include: puma_rhel.yml
+  when: ansible_os_family == "RedHat"
+
+- name: PWC Compound | Instance Register
+  ec2_elb:
+    ec2_access_key: "{{ infra_ec2_aws_access_key }}"
+    ec2_secret_key: "{{ infra_ec2_aws_access_secret }}"
+    ec2_region: "{{ infra_ec2_aws_region }}"
+    instance_id: "{{ ansible_ec2_instance_id }}"
+    ec2_elbs: "{{ item }}"
+    wait: no
+    state: present
+  with_items: "{{ ec2_elbs }}"
+  when: infra_ec2_aws_access_key is defined
+  tags: [deploy]

@@ -1,0 +1,9 @@
+---
+
+server_name: "{{ mnoe.dns_record.record }}"
+deploy_directory: "/apps/{{ compound_project }}"
+s3_file: "{{ compound_project }}/{{ compound_folder }}/{{ compound_version }}.tar.gz"
+default_environment:
+  RAILS_ENV: "{{ rails_environment }}"
+  PATH: /usr/local/rvm/gems/ruby-2.3.0/bin:/usr/local/rvm/gems/ruby-2.3.0@global/bin:/usr/local/rvm/rubies/ruby-2.3.0/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/rvm/bin
+  GEM_PATH: /usr/local/rvm/gems/ruby-2.3.0:/usr/local/rvm/gems/ruby-2.3.0@global

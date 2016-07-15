@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+
+# Extra variables
+{% if compound_config.extra_variables is defined %}
+{% for key in compound_config.extra_variables %}
+export {{ key }}={{ (compound_config.extra_variables[key] | to_json) if compound_config.extra_variables[key] is mapping else compound_config.extra_variables[key] }}
+{% endfor %}
+{% endif %}

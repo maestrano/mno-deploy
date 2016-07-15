@@ -1,0 +1,4 @@
+{{ ssl_internal_cert }}
+{% if ssl_internal_bundle is defined %}
+{{ ssl_internal_bundle }}
+{% endif %}
