@@ -36,7 +36,7 @@ export no_proxy="localhost,169.254.169.254"
 #====================================================
 # Ubuntu: Install Dependencies
 if [ "$(which apt-get > /dev/null 2>&1)$?" == "0" ]; then
-  apt-get -y update && apt-get install -y python-pip
+  apt-get -y update && apt-get install -y python-pip -y libffi-dev -y libcurl4-openssl-dev -y zlib1g-dev -y libyaml-dev
 fi
 
 # RHEL: Install depdendencies
