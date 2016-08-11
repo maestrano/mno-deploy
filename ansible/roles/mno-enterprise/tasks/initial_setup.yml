@@ -52,36 +52,43 @@
 
 - name: Maestrano Enterprise | Install puma
   command: gem install puma
+  when: frontend_config.component is defined and frontend_config.component == 'web'
+
+- include: sidekiq_deb.yml
+  when: ansible_os_family == "Debian" and frontend_config.component is defined and frontend_config.component == 'jobs'
 
 - include: puma_deb.yml
-  when: ansible_os_family == "Debian"
+  when: ansible_os_family == "Debian" and frontend_config.component is defined and frontend_config.component == 'web'
 
 - include: puma_rhel.yml
-  when: ansible_os_family == "RedHat"
+  when: ansible_os_family == "RedHat" and frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Maestrano Enterprise | Copy puma.rb config
   template: src=puma.rb dest={{deploy_directory}}/shared/config/puma.rb owner=deployer group=deployer mode=0755
+  when: frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Frontend App | Nginx default site deactivation
   file: path=/etc/nginx/sites-enabled/default.conf state=absent
+  when: frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Frontend App | Nginx site configuration
   template: "src=etc-nginx-frontend dest=/etc/nginx/sites-available/{{ frontend_project }}"
   register: nginxconfig
+  when: frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Frontend App | Nginx certificates directory
   file: path=/etc/nginx/certificates state=directory
-  when: ssl_internal_cert is defined and ssl_internal_key is defined
+  when: ssl_internal_cert is defined and ssl_internal_key is defined and frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Frontend App | Nginx SSL Certificate
   template: "src=etc-nginx-frontend-ssl-cert dest=/etc/nginx/certificates/{{ frontend_project }}.crt"
   register: nginxsslcert
-  when: ssl_internal_cert is defined and ssl_internal_key is defined
+  when: ssl_internal_cert is defined and ssl_internal_key is defined and frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Frontend App | Nginx SSL Certificate Key
   template: "src=etc-nginx-frontend-ssl-key dest=/etc/nginx/certificates/{{ frontend_project }}.key"
   register: nginxsslkey
-  when: ssl_internal_cert is defined and ssl_internal_key is defined
+  when: ssl_internal_cert is defined and ssl_internal_key is defined and frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Frontend App | Nginx site activation
   file:
@@ -89,10 +96,11 @@
     dest: "/etc/nginx/sites-enabled/{{ frontend_project }}"
     state: link
     force: yes
+  when: frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Maestrano Enterprise | Nginx restart
   shell: service nginx restart
-  when: nginxconfig.changed or (nginxsslcert is defined and nginxsslcert.changed) or (nginxsslkey is defined and nginxsslkey.changed)
+  when: nginxconfig.changed or (nginxsslcert is defined and nginxsslcert.changed) or (nginxsslkey is defined and nginxsslkey.changed) and frontend_config.component is defined and frontend_config.component == 'web'
 
 - name: Maestrano Enterprise | Configure splunk forwarder inputs
   shell: "/opt/splunkforwarder/bin/splunk add monitor {{ item.monitor }} -index {{ item.index }} -hostname {{ ansible_hostname }} -auth {{ splunk.username }}:{{ splunk.password }}"

@@ -36,6 +36,10 @@
   include: puma_deb.yml
   when: ansible_os_family == "Debian"
 
+- name: PwC Enterprise | Run/Reload Sidekiq (Debian)
+  include: sidekiq_deb.yml
+  when: ansible_os_family == "Debian"
+
 - name: Maestrano Enterprise | Run/Reload Puma (RHEL)
   include: puma_rhel.yml
   when: ansible_os_family == "RedHat"

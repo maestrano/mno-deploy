@@ -1,0 +1,8 @@
+
+- name: PwC Enterprise | Add /etc/init/sidekiq.conf
+  template: src=etc_init_sidekiq.conf.j2 dest=/etc/init/sidekiq.conf force=yes mode=0755
+  when: frontend_config.component is defined and frontend_config.component == 'jobs'
+
+- name: PwC Enterprise | Add sidekiq to upstart
+  service: name=sidekiq state=restarted enabled=yes
+  when: frontend_config.component is defined and frontend_config.component == 'jobs'

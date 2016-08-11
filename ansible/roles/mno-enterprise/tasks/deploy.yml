@@ -47,6 +47,14 @@
     group: deployer
     mode: 0755
 
+- name: PwC Frontend | Sidekiq sidekiq.yml
+  template:
+    src: sidekiq.yml.j2
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/sidekiq.yml"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
 - name: MNOE Frontend | Configuration file config/application.yml
   template:
     src: application.yml
@@ -176,3 +184,8 @@
 
 - name: MNOE Frontend | Restart puma service
   service: name=puma state=restarted
+  when: frontend_config.component is defined and frontend_config.component == 'web'
+
+- name: PwC Frontend | Restart Sidekiq service
+  service: name=sidekiq state=restarted
+  when: frontend_config.component is defined and frontend_config.component == 'jobs'

@@ -3,6 +3,8 @@
 server_name: "{{ mnoe.dns_record.record }}"
 deploy_directory: "/apps/{{ frontend_project }}"
 s3_file: "{{ frontend_project }}/{{ frontend_folder }}/{{ frontend_version }}.tar.gz"
+frontend_config:
+  job_concurrency: 10
 default_environment:
   RAILS_ENV: "{{ rails_environment }}"
   PATH: /usr/local/rvm/gems/ruby-2.2.0/bin:/usr/local/rvm/gems/ruby-2.2.0@global/bin:/usr/local/rvm/rubies/ruby-2.2.0/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/rvm/bin
