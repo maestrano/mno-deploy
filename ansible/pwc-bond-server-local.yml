@@ -1,0 +1,20 @@
+---
+
+- name: Configure pwc-bond instances
+  hosts: localhost
+  connection: local
+  vars_files:
+  - [ "vars/{{ env_config }}.yml" ]
+  - [ "vars/{{ env_config }}_secrets.yml" ]
+  roles:
+    - role: common
+    - role: ntp
+    - { role: swapfile, swapfile_swappiness: 10 }
+    - { role: newrelic, when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
+    - { role: rvm_io.rvm1-ruby, tags: ruby, rvm1_rubies: ['ruby-2.2.0'] }
+    - { role: jdauphant.nginx, keep_only_specified: true }
+    - { role: sumocollector, sumologic_collector_application_log_path: "{{ sumologic.mno_enterprise.log_path }}", sumologic_host_name: "mnoe-{{ rails_environment }}", when: not(sumologic.skip) }
+    - { role: splunk }
+    - { role: pwc-bond, bond_config: {component: 'web'}, when: bond_project is defined and bond_project }
+    - { role: logrotate, logrotate_scripts: [{name: mnoe, path: "{{ deploy_directory }}/shared/log/{{ rails_environment }}.log", options: "{{ logrotate.options }}"}] }
+    - { role: logrotate, logrotate_scripts: [{name: newrelic, path: "{{ deploy_directory }}/shared/log/newrelic_agent.log", options: "{{ logrotate.options }}"}] }
