@@ -10,11 +10,10 @@
     login_host: "{{ bond_rds.endpoint }}"
     login_user: "{{ bond_rds.username }}"
     login_password: "{{ bond_rds.password }}"
-    login_port: 5432
     #collation: utf8_general_ci
     #encoding: utf8
     template: template0
-    name: "{{ mnoe_database_name }}"
+    name: "{{ bond_database_name }}"
     state: present
   when: not rds.skip
 
@@ -23,9 +22,8 @@
     login_host: "{{ bond_rds.endpoint }}"
     login_user: "{{ bond_rds.username }}"
     login_password: "{{ bond_rds.password }}"
-    login_port: 5432
+    port: 5432
     name: "{{ bond_database_username }}"
-    host: '%'
     password: "{{ bond_database_password }}"
     state: present
     role_attr_flags: "CREATEDB,NOSUPERUSER,LOGIN"
