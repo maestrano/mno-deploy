@@ -15,6 +15,6 @@
     - { role: jdauphant.nginx, keep_only_specified: true }
     - { role: sumocollector, sumologic_collector_application_log_path: "{{ sumologic.mno_enterprise.log_path }}", sumologic_host_name: "mnoe-{{ rails_environment }}", when: not(sumologic.skip) }
     - { role: splunk }
-    - { role: pwc-bond, bond_config: {component: 'web'}, when: bond_project is defined and bond_project }
+    - { role: pwc-bond, bond_config: {component: 'web'}}
     - { role: logrotate, logrotate_scripts: [{name: mnoe, path: "{{ deploy_directory }}/shared/log/{{ rails_environment }}.log", options: "{{ logrotate.options }}"}] }
     - { role: logrotate, logrotate_scripts: [{name: newrelic, path: "{{ deploy_directory }}/shared/log/newrelic_agent.log", options: "{{ logrotate.options }}"}] }
