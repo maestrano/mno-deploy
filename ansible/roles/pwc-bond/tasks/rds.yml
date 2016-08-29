@@ -27,4 +27,5 @@
     password: "{{ bond_database_password }}"
     state: present
     role_attr_flags: "CREATEDB,NOSUPERUSER,LOGIN"
+    db: "{{ bond_database_name }}"
   when: not rds.skip
