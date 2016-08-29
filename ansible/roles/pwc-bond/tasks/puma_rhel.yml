@@ -1,0 +1,7 @@
+---
+
+- name: PwC Bond | Add /etc/systemd/system/puma.service
+  template: src=puma.service dest=/etc/systemd/system/puma.service force=yes mode=0755
+
+- name: PwC Bond | Add puma to systemd
+  service: name=puma state=started enabled=yes

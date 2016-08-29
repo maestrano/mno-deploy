@@ -1,0 +1,8 @@
+
+- name: PwC Bond | Add /etc/init/sidekiq.conf
+  template: src=etc_init_sidekiq.conf.j2 dest=/etc/init/sidekiq.conf force=yes mode=0755
+  when: bond_config.component is defined and bond_config.component == 'jobs'
+
+- name: PwC Bond | Add sidekiq to upstart
+  service: name=sidekiq state=restarted enabled=yes
+  when: bond_config.component is defined and bond_config.component == 'jobs'

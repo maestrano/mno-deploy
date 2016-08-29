@@ -1,0 +1,32 @@
+---
+- name: PWC Bond RDS | Install packages
+  apt: "name={{ item }} state=present update_cache=yes"
+  with_items:
+    - python-psycopg2
+  when: ansible_os_family == "Debian"
+
+- name: PwC Bond | Create RDS database
+  postgresql_db:
+    login_host: "{{ bond_rds.endpoint }}"
+    login_user: "{{ bond_rds.username }}"
+    login_password: "{{ bond_rds.password }}"
+    login_port: 5432
+    #collation: utf8_general_ci
+    #encoding: utf8
+    template: template0
+    name: "{{ mnoe_database_name }}"
+    state: present
+  when: not rds.skip
+
+- name: PwC Bond | Create RDS database user
+  postgresql_user:
+    login_host: "{{ bond_rds.endpoint }}"
+    login_user: "{{ bond_rds.username }}"
+    login_password: "{{ bond_rds.password }}"
+    login_port: 5432
+    name: "{{ bond_database_username }}"
+    host: '%'
+    password: "{{ bond_database_password }}"
+    state: present
+    role_attr_flags: "CREATEDB,NOSUPERUSER,LOGIN"
+  when: not rds.skip

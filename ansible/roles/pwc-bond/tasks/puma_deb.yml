@@ -1,0 +1,9 @@
+---
+
+- name: PwC Bond | Add /etc/init/puma.conf
+  template: src=etc_init_puma.conf.j2 dest=/etc/init/puma.conf force=yes mode=0755
+  when: bond_config.component is defined and bond_config.component == 'web'
+
+- name: PwC Bond | Add puma to upstart
+  service: name=puma state=started enabled=yes
+  when: bond_config.component is defined and bond_config.component == 'web'

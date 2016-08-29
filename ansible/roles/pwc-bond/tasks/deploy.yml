@@ -1,0 +1,187 @@
+---
+
+- name: PwC Bond | Release folder
+  set_fact: release_folder="{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
+
+- name: PwC Bond | Download application from S3 ({{ frontend_project }}-{{ frontend_version }}.tar.gz)
+  s3:
+    bucket: "{{ mno_pkgs_bucket }}"
+    object: "{{ s3_file }}"
+    dest: "{{ deploy_directory }}/{{ frontend_project }}-{{ frontend_version }}.tar.gz"
+    mode: get
+    region: "{{ mno_pkgs_s3_aws_region }}"
+    aws_access_key: "{{ mno_pkgs_s3_aws_access_key }}"
+    aws_secret_key: "{{ mno_pkgs_s3_aws_secret_key }}"
+
+- name: PwC Bond | Replace version
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    state: absent
+
+- name: PwC Bond | Create version directory (/apps/mnoe/releases/XXX)
+  file: path={{ deploy_directory }}/releases/{{ release_folder }} owner=deployer group=deployer state=directory
+
+- name: PwC Bond | Extract current version
+  command: "tar -xzf {{ deploy_directory }}/{{ frontend_project }}-{{ frontend_version }}.tar.gz -C {{ deploy_directory }}/releases/{{ release_folder }}"
+
+- name: PwC Bond | Clean up tar file
+  file:
+    path: "{{ deploy_directory }}/{{ frontend_project }}-{{ frontend_version }}.tar.gz"
+    state: absent
+
+- name: PwC Bond | Clean up gems
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/bundle"
+    state: absent
+
+- name: PwC Bond | Clean up gems
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor"
+    state: directory
+
+- name: PwC Bond | Database file database.yml
+  template:
+    src: database.yml
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/database.yml"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: PwC Bond | Sidekiq sidekiq.yml
+  template:
+    src: sidekiq.yml.j2
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/sidekiq.yml"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: PwC Bond | Configuration file config/application.yml
+  template:
+    src: application.yml
+    dest: "{{ deploy_directory }}/shared/config/application.yml"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: PwC Bond | Replace config/application.yml
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/config/application.yml"
+    state: absent
+
+- name: PwC Bond | Symbolic link to config/application.yml
+  file:
+    src: "{{ deploy_directory }}/shared/config/application.yml"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/application.yml"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+
+- name: PwC Bond | Replace robots.txt file
+  template:
+    src: robots.txt
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/public/robots.txt"
+    owner: deployer
+    group: deployer
+    mode: 0755
+
+- name: PwC Bond | Set directory permissions
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    mode: 0755
+    owner: deployer
+    group: deployer
+    state: directory
+    recurse: yes
+
+- name: PwC Bond | Symbolic link to gems
+  file:
+    src: "{{ deploy_directory }}/shared/vendor_bundle"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/vendor/bundle"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+
+- name: PwC Bond | Move precompiled assets files
+  shell: mv {{ deploy_directory }}/releases/{{ release_folder }}/public/{{ item }}/* {{ deploy_directory }}/shared/{{ item }}/
+  with_items:
+    - assets
+    - styles
+    - scripts
+  ignore_errors: true
+
+- name: PwC Bond | Symbolic link to assets
+  file:
+    src: "{{ deploy_directory }}/shared/{{ item }}"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/public/{{ item }}"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+  with_items:
+    - assets
+    - styles
+    - scripts
+  ignore_errors: true
+
+- name: PwC Bond | Run bundle install
+  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle install --path={{ deploy_directory }}/shared/vendor_bundle --gemfile={{ deploy_directory }}/releases/{{ release_folder }}/Gemfile --deployment --without development test"
+  sudo_user: deployer
+  environment: "{{ default_environment }}"
+
+- name: PwC Bond | Migrate the database
+  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle exec rake db:migrate_or_setup"
+  environment: "{{ default_environment }}"
+  sudo_user: deployer
+  when: not mnoe.skip_migrations
+
+- name: PwC Bond | Assets precompile
+  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle exec rake assets:precompile"
+  sudo_user: deployer
+  environment: "{{ default_environment }}"
+  when: not mnoe.skip_precompile
+
+- name: PwC Bond | Replace previous version
+  file:
+    path: "{{ deploy_directory }}/current"
+    state: absent
+
+- name: PwC Bond | Symbolic link to current version
+  file:
+    src: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    dest: "{{ deploy_directory }}/current"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+
+- name: PwC Bond | Clean directories
+  file:
+    path: "{{ deploy_directory }}/releases/{{ release_folder }}/{{ item }}"
+    state: absent
+  with_items:
+    - log
+    - tmp
+    - downloads
+
+- name: PwC Bond | Symbolic links to shared directories
+  file:
+    src: "{{ deploy_directory }}/shared/{{ item }}"
+    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/{{ item }}"
+    owner: deployer
+    group: deployer
+    state: link
+    force: yes
+  with_items:
+    - log
+    - tmp
+    - downloads
+
+- name: PwC Bond | Restart puma service
+  service: name=puma state=restarted
+  when: frontend_config.component is defined and frontend_config.component == 'web'
+
+- name: PwC Bond | Restart Sidekiq service
+  service: name=sidekiq state=restarted
+  when: frontend_config.component is defined and frontend_config.component == 'jobs'

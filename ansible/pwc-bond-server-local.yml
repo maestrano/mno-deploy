@@ -11,7 +11,7 @@
     - role: ntp
     - { role: swapfile, swapfile_swappiness: 10 }
     - { role: newrelic, when: not((newrelic_license_key is undefined) or (newrelic_license_key is none)) }
-    - { role: rvm_io.rvm1-ruby, tags: ruby, rvm1_rubies: ['ruby-2.2.0'] }
+    - { role: rvm_io.rvm1-ruby, tags: ruby, rvm1_rubies: ['ruby-2.3.1'] }
     - { role: jdauphant.nginx, keep_only_specified: true }
     - { role: sumocollector, sumologic_collector_application_log_path: "{{ sumologic.mno_enterprise.log_path }}", sumologic_host_name: "mnoe-{{ rails_environment }}", when: not(sumologic.skip) }
     - { role: splunk }

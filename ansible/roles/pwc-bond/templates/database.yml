@@ -1,0 +1,9 @@
+{{ rails_environment }}:
+  adapter: postgresql
+  encoding: utf8
+  host: <%= ENV['database_hostname'] %>
+  database: <%= ENV['database_name'] %>
+  pool: {{ mnoe_database_pool }}
+  timeout: {{ mnoe_database_timeout }}
+  username: <%= ENV['database_username'] %>
+  password: <%= ENV['database_password'] %>
