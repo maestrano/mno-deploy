@@ -67,30 +67,30 @@
   template: src=puma.rb dest={{deploy_directory}}/shared/config/puma.rb owner=deployer group=deployer mode=0755
   when: bond_config.component is defined and bond_config.component == 'web'
 
-- name: Frontend App | Nginx default site deactivation
+- name: PwC Bond App | Nginx default site deactivation
   file: path=/etc/nginx/sites-enabled/default.conf state=absent
   when: bond_config.component is defined and bond_config.component == 'web'
 
-- name: Frontend App | Nginx site configuration
+- name: PwC Bond App | Nginx site configuration
   template: "src=etc-nginx-bond dest=/etc/nginx/sites-available/{{ bond_project }}"
   register: nginxconfig
   when: bond_config.component is defined and bond_config.component == 'web'
 
-- name: Frontend App | Nginx certificates directory
+- name: PwC Bond App | Nginx certificates directory
   file: path=/etc/nginx/certificates state=directory
   when: ssl_internal_cert is defined and ssl_internal_key is defined and bond_config.component is defined and bond_config.component == 'web'
 
-- name: Frontend App | Nginx SSL Certificate
+- name: PwC Bond App | Nginx SSL Certificate
   template: "src=etc-nginx-bond-ssl-cert dest=/etc/nginx/certificates/{{ bond_project }}.crt"
   register: nginxsslcert
   when: ssl_internal_cert is defined and ssl_internal_key is defined and bond_config.component is defined and bond_config.component == 'web'
 
-- name: Frontend App | Nginx SSL Certificate Key
+- name: PwC Bond App | Nginx SSL Certificate Key
   template: "src=etc-nginx-bond-ssl-key dest=/etc/nginx/certificates/{{ bond_project }}.key"
   register: nginxsslkey
   when: ssl_internal_cert is defined and ssl_internal_key is defined and bond_config.component is defined and bond_config.component == 'web'
 
-- name: Frontend App | Nginx site activation
+- name: PwC Bond App | Nginx site activation
   file:
     src: "/etc/nginx/sites-available/{{ bond_project }}"
     dest: "/etc/nginx/sites-enabled/{{ bond_project }}"
