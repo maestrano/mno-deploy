@@ -1,32 +1,14 @@
 # {{ ansible_managed }}
 
 # Database
-database_hostname: {{ rds.endpoint }}
-database_name: {{ mnoe_database_name }}
-database_username: {{ mnoe_database_username }}
-database_password: {{ mnoe_database_password }}
-
-# Tenant API keys
-{% if frontend_config.tenant is defined and frontend_config.tenant.id is defined %}
-tenant_id: {{ frontend_config.tenant.id }}
-tenant_key: {{ frontend_config.tenant.key }}
-{% endif %}
-
-# Impac! configuration
-{% if impac_config is defined and impac_config.public_dns is defined and impac_config.public_dns.scheme is defined %}
-impac_protocol: {{ impac_config.public_dns.scheme }}
-impac_host: {{ impac_config.public_dns.host }}
-{% endif %}
-
-# Mnohub configuration
-mno_protocol: {{ mnohub_config.public_dns.scheme }}
-mno_host: {{ mnohub_config.public_dns.host }}
-mno_private_protocol: {{ mnohub_config.private_dns.scheme }}
-mno_private_host: {{ mnohub_config.private_dns.host }}
+database_hostname: {{ bond_rds.endpoint }}
+database_name: {{ bond_database_name }}
+database_username: {{ bond_database_username }}
+database_password: {{ bond_database_password }}
 
 # Extra variables
-{% if frontend_config.extra_variables is defined %}
-{% for key in frontend_config.extra_variables %}
-{{ key }}: {{ (frontend_config.extra_variables[key] | to_json) if frontend_config.extra_variables[key] is mapping else frontend_config.extra_variables[key] }}
+{% if bond_config.extra_variables is defined %}
+{% for key in bond_config.extra_variables %}
+{{ key }}: {{ (bond_config.extra_variables[key] | to_json) if bond_config.extra_variables[key] is mapping else bond_config.extra_variables[key] }}
 {% endfor %}
 {% endif %}
