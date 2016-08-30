@@ -125,11 +125,21 @@
     - scripts
   ignore_errors: true
 
-- name: PwC Bond | Run bundle install
-  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle install --path={{ deploy_directory }}/shared/vendor_bundle --gemfile={{ deploy_directory }}/releases/{{ release_folder }}/Gemfile --deployment --without development test"
-  sudo_user: deployer
-  environment: "{{ default_environment }}"
+  #- name: PwC Bond | Run bundle install
+  #  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle install --path={{ deploy_directory }}/shared/vendor_bundle --gemfile={{ deploy_directory }}/releases/{{ release_folder }}/Gemfile --deployment --without development test"
+  #  sudo_user: deployer
+  #  environment: "{{ default_environment }}"
 
+- name: PwC Bond | Run bundle install
+  bundler: 
+    state: present
+    chdir: "{{ deploy_directory }}/releases/{{ release_folder }}"
+    deployment_mode: True
+    exclude_groups: 
+      - development
+      - test
+    extra_args: "--path={{ deploy_directory }}/shared/vendor_bundle"
+    
 - name: PwC Bond | Migrate the database
   command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle exec rake db:migrate_or_setup"
   environment: "{{ default_environment }}"
