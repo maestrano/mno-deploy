@@ -3,11 +3,11 @@
 - name: PwC Bond | Release folder
   set_fact: release_folder="{{lookup('pipe','date +%Y%m%d%H%M%S')}}"
 
-- name: PwC Bond | Download application from S3 ({{ frontend_project }}-{{ frontend_version }}.tar.gz)
+- name: PwC Bond | Download application from S3 ({{ bond_project }}-{{ bond_version }}.tar.gz)
   s3:
     bucket: "{{ mno_pkgs_bucket }}"
     object: "{{ s3_file }}"
-    dest: "{{ deploy_directory }}/{{ frontend_project }}-{{ frontend_version }}.tar.gz"
+    dest: "{{ deploy_directory }}/{{ bond_project }}-{{ bond_version }}.tar.gz"
     mode: get
     region: "{{ mno_pkgs_s3_aws_region }}"
     aws_access_key: "{{ mno_pkgs_s3_aws_access_key }}"
@@ -18,15 +18,15 @@
     path: "{{ deploy_directory }}/releases/{{ release_folder }}"
     state: absent
 
-- name: PwC Bond | Create version directory (/apps/mnoe/releases/XXX)
+- name: PwC Bond | Create version directory (/apps/pwc-bond/releases/XXX)
   file: path={{ deploy_directory }}/releases/{{ release_folder }} owner=deployer group=deployer state=directory
 
 - name: PwC Bond | Extract current version
-  command: "tar -xzf {{ deploy_directory }}/{{ frontend_project }}-{{ frontend_version }}.tar.gz -C {{ deploy_directory }}/releases/{{ release_folder }}"
+  command: "tar -xzf {{ deploy_directory }}/{{ bond_project }}-{{ bond_version }}.tar.gz -C {{ deploy_directory }}/releases/{{ release_folder }}"
 
 - name: PwC Bond | Clean up tar file
   file:
-    path: "{{ deploy_directory }}/{{ frontend_project }}-{{ frontend_version }}.tar.gz"
+    path: "{{ deploy_directory }}/{{ bond_project }}-{{ bond_version }}.tar.gz"
     state: absent
 
 - name: PwC Bond | Clean up gems
@@ -141,16 +141,14 @@
     extra_args: "--path={{ deploy_directory }}/shared/vendor_bundle"
     
 - name: PwC Bond | Migrate the database
-  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle exec rake db:migrate_or_setup"
+  command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle exec rake db:migrate"
   environment: "{{ default_environment }}"
   sudo_user: deployer
-  when: not mnoe.skip_migrations
 
 - name: PwC Bond | Assets precompile
   command: "chdir={{ deploy_directory }}/releases/{{ release_folder }} bundle exec rake assets:precompile"
   sudo_user: deployer
   environment: "{{ default_environment }}"
-  when: not mnoe.skip_precompile
 
 - name: PwC Bond | Replace previous version
   file:
@@ -190,8 +188,8 @@
 
 - name: PwC Bond | Restart puma service
   service: name=puma state=restarted
-  when: frontend_config.component is defined and frontend_config.component == 'web'
+  when: bond_config.component is defined and bond_config.component == 'web'
 
 - name: PwC Bond | Restart Sidekiq service
   service: name=sidekiq state=restarted
-  when: frontend_config.component is defined and frontend_config.component == 'jobs'
+  when: bond_config.component is defined and bond_config.component == 'jobs'
