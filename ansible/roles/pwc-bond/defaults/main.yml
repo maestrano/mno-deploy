@@ -1,11 +1,11 @@
 ---
 
-server_name: "{{ mnoe.dns_record.record }}"
+server_name: "_"
 deploy_directory: "/apps/{{ bond_project }}"
 s3_file: "{{ bond_project }}/{{ bond_folder }}/{{ bond_version }}.tar.gz"
 bond_config:
   job_concurrency: 10
 default_environment:
   RAILS_ENV: "{{ rails_environment }}"
-  PATH: /usr/local/rvm/gems/ruby-2.3.0/bin:/usr/local/rvm/gems/ruby-2.3.0@global/bin:/usr/local/rvm/rubies/ruby-2.3.0/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/rvm/bin
-  GEM_PATH: /usr/local/rvm/gems/ruby-2.3.0:/usr/local/rvm/gems/ruby-2.3.0@global
+  PATH: /usr/local/rvm/gems/ruby-2.3.1/bin:/usr/local/rvm/gems/ruby-2.3.1@global/bin:/usr/local/rvm/rubies/ruby-2.3.1/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/rvm/bin
+  GEM_PATH: /usr/local/rvm/gems/ruby-2.3.1:/usr/local/rvm/gems/ruby-2.3.1@global
