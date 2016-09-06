@@ -47,13 +47,14 @@
     group: deployer
     mode: 0755
 
-- name: PwC Bond | Sidekiq sidekiq.yml
-  template:
-    src: sidekiq.yml.j2
-    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/sidekiq.yml"
-    owner: deployer
-    group: deployer
-    mode: 0755
+  # removing so devs can control sidekiq.yml
+  #- name: PwC Bond | Sidekiq sidekiq.yml
+  #  template:
+  #    src: sidekiq.yml.j2
+  #    dest: "{{ deploy_directory }}/releases/{{ release_folder }}/config/sidekiq.yml"
+  #    owner: deployer
+  #    group: deployer
+  #    mode: 0755
 
 - name: PwC Bond | Configuration file config/application.yml
   template:
