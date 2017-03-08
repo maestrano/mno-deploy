@@ -57,6 +57,8 @@ geocoder:
   ip_lookup: 'geoip2'
   geoip2:
     file: <%= File.join(Rails.root,'geocoder','geodb.mmdb') %>
+geonames:
+  username: {{ mnohub_config.geonames.username }}
 
 # Developer platform
 dev_platform:
