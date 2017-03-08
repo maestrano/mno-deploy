@@ -1194,6 +1194,8 @@ mnohub_config:
     enabled: true
   sumocollector:
     enabled: false
+  geonames:
+    username: changeme
 
 # Nex! Config
 nex_config:
