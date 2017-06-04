@@ -1,0 +1,98 @@
+---
+
+- name: Spark Zeppelin | Install required packages (Debian)
+  apt: "name={{ item }} state=present update_cache=yes"
+  with_items:
+    - mongodb-clients
+  when: ansible_os_family == "Debian"
+
+- name: Spark Zeppelin | Create user account
+  user: name={{ spark_user }}
+  tags: ["spark-jobserver-user"]
+
+- name: Spark Zeppelin | Ensure service directories exist
+  file: path="{{ item }}"
+        owner={{ spark_user }}
+        group={{ spark_user }}
+        mode=0755
+        state=directory
+  with_items:
+    - "{{ spark_zeppelin_log_dir }}"
+    - "{{ spark_zeppelin_run_dir }}"
+
+- name: Spark Zeppelin | Download distribution
+  get_url: url="{{ spark_zeppelin_mirror }}/zeppelin-{{ spark_zeppelin_version }}/zeppelin-{{ spark_zeppelin_version }}-bin-all.tgz"
+           dest="{{ spark_zeppelin_src_dir }}/zeppelin-{{ spark_zeppelin_version }}-bin-all.tgz"
+
+- name: Spark Zeppelin | Extract distribution
+  unarchive: src="{{ spark_zeppelin_src_dir }}/zeppelin-{{ spark_zeppelin_version }}-bin-all.tgz"
+             dest="{{ spark_zeppelin_usr_parent_dir }}"
+             copy=no
+             creates="{{ spark_zeppelin_usr_parent_dir }}/zeppelin-{{ spark_zeppelin_version }}-bin-all"
+
+- name: Spark Zeppelin | Setup distribution symlinks
+  file: src="{{ item.src }}"
+        dest="{{ item.dest }}"
+        state=link
+  with_items:
+    - { src: "{{ spark_zeppelin_usr_parent_dir }}/zeppelin-{{ spark_zeppelin_version }}-bin-all", dest: "{{ spark_zeppelin_lib_dir }}" }
+    - { src: "{{ spark_zeppelin_usr_parent_dir }}/zeppelin-{{ spark_zeppelin_version }}-bin-all/conf", dest: "{{ spark_zeppelin_conf_dir }}" }
+  tags: ["symlinks"]
+
+- name: Spark Zeppelin | Setup configuration files
+  template: src=conf/{{ item }}
+            dest="{{ spark_zeppelin_usr_parent_dir }}/zeppelin-{{ spark_zeppelin_version }}-bin-all/conf/{{ item }}"
+            mode=0755
+  with_items:
+    - zeppelin-env.sh
+    - zeppelin-site.xml
+    - shiro.ini
+  tags: ["config"]
+
+- name: Spark Zeppelin | Create folders for extra interpreters
+  file: path="{{ spark_zeppelin_usr_parent_dir }}/zeppelin-{{ spark_zeppelin_version }}-bin-all/interpreter/{{ item.name }}"
+        owner={{ spark_user }}
+        group={{ spark_user }}
+        mode=0755
+        state=directory
+  with_items: "{{ spark_zeppelin_extra_interpreters }}"
+
+- name: Spark Zeppelin | Download extra interpreters
+  get_url: url="{{ item.src }}/{{ item.jar }}"
+           dest="{{ spark_zeppelin_usr_parent_dir }}/zeppelin-{{ spark_zeppelin_version }}-bin-all/interpreter/{{ item.name }}/{{ item.jar }}"
+  with_items: "{{ spark_zeppelin_extra_interpreters }}"
+
+- name: Spark Zeppelin | Add service script
+  template: src=upstart/zeppelin.conf
+            dest=/etc/init/zeppelin.conf
+            mode=0755
+  tags: ["service"]
+
+- name: Spark Zeppelin | Start service
+  service: name=zeppelin state=restarted enabled=yes
+  tags: ["service"]
+
+- stat: path=/etc/nginx/sites-enabled
+  register: nginxsitedir
+
+- name: Spark Zeppelin | Nginx default site deactivation
+  file: path=/etc/nginx/sites-enabled/default.conf state=absent
+  when: nginxsitedir.stat.exists
+
+- name: Spark Zeppelin | Nginx site configuration
+  template: src=nginx/zeppelin
+            dest="/etc/nginx/sites-available/zeppelin"
+  register: nginxconfig
+  when: nginxsitedir.stat.exists
+
+- name: Spark Zeppelin | Nginx site activation
+  file:
+    src: /etc/nginx/sites-available/zeppelin
+    dest: /etc/nginx/sites-enabled/zeppelin
+    state: link
+    force: yes
+  when: nginxsitedir.stat.exists
+
+- name: Spark Zeppelin | Nginx reload
+  service: name=nginx state=reloaded enabled=yes
+  when: nginxsitedir.stat.exists and nginxconfig.changed

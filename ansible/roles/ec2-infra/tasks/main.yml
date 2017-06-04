@@ -45,3 +45,6 @@
 - include: rundeck.yml
   when: not rundeck.skip
   tags: [infra_rundeck]
+- include: spark-proto.yml
+  when: not spark_proto.skip
+  tags: [infra_spark_proto]

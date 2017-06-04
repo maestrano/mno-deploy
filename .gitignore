@@ -1,3 +1,4 @@
 .env*
 .connect
 tests/tmpdeploy
+ansible/vars/maestrano_*

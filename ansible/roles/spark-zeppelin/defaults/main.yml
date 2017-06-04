@@ -1,0 +1,32 @@
+spark_zeppelin_version: "0.6.0"
+spark_zeppelin_mirror: "http://apache.uberglobalmirror.com/zeppelin"
+
+spark_zeppelin_usr_parent_dir: "/usr/lib"  #this is the folder where the archives will be extracted
+spark_zeppelin_src_dir: "/usr/local/src"
+spark_zeppelin_lib_dir: "/var/lib/zeppelin"
+spark_zeppelin_log_dir: "/var/log/zeppelin"
+spark_zeppelin_run_dir: "/run/zeppelin"
+spark_zeppelin_conf_dir: "/etc/zeppelin"
+spark_zeppelin_port: 9010
+
+spark_user: "spark"
+
+# List of users with access to Zeppelin
+spark_zeppelin_users:
+  root: changeme
+
+# S3 Storage Backend Configuration
+spark_zeppelin_s3_backend:
+  enabled: False
+  bucket_name: some-bucket
+  username: zeppelin
+  aws_key: some-key
+  aws_secret: some-secret
+
+# Additional list of interpreters
+spark_zeppelin_extra_interpreters:
+  -
+    name: mongodb
+    jar: zeppelin-mongodb-0.6.0-SNAPSHOT-jar-with-dependencies.jar
+    src: "http://cdn.maestrano.com/pkg/zeppelin/interpreter/mongodb"
+    klass: 'org.apache.zeppelin.mongodb.MongoDbInterpreter'

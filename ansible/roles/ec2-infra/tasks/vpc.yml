@@ -12,7 +12,7 @@
     aws_access_key: "{{ aws_access_key }}"
     aws_secret_key: "{{ aws_secret_key }}"
   register: new_vpc
-  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform,infra_spark_proto]
   when: vpc.vpc_id is undefined or vpc.vpc_id is none
 
 - name: Retrieve VPC detail
@@ -26,22 +26,22 @@
     aws_access_key: "{{ aws_access_key }}"
     aws_secret_key: "{{ aws_secret_key }}"
   register: existing_vpc
-  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform,infra_spark_proto]
   when: vpc.vpc_id is defined and vpc.vpc_id is not none
 
 # Combine VPC variables into one
 - set_fact: created_vpc="{{ new_vpc if vpc.vpc_id is undefined or vpc.vpc_id is none else existing_vpc }}"
-  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform,infra_spark_proto]
 
 # Sort the list of subnets using the same order as the one specified by vpc.subnets
 - set_fact: sorted_subnet_list=''
-  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform,infra_spark_proto]
 - set_fact: sorted_subnet_list="{{sorted_subnet_list | list}} + {{created_vpc.subnets | selectattr("cidr", "equalto", item.cidr) | list}}"
   with_items: "{{ vpc.subnets }}"
-  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform,infra_spark_proto]
 - set_fact:
     created_vpc: "{{ created_vpc | combine({'subnets': sorted_subnet_list}) }}"
-  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform,infra_spark_proto]
 
 - name: Create VPC subnets
   ec2_vpc_subnet:
@@ -66,7 +66,7 @@
     vpc_id: "{{ created_vpc.vpc_id }}"
   with_items: "{{ security_groups }}"
   register: created_security_groups
-  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform]
+  tags: [infra_rds,infra_mnoe,infra_maestrano,infra_mnohub,infra_nex,infra_connec,infra_impac,infra_rundeck,infra_dev_platform,infra_spark_proto]
 
 - name: Tag the security groups
   ec2_tag:

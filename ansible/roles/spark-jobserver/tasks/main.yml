@@ -1,0 +1,77 @@
+---
+- name: Spark Jobserver | Create user account
+  user: name={{ spark_user }}
+  tags: ["spark-jobserver-user"]
+
+- name: Spark Jobserver | Ensure service directories exist
+  file: path="{{ item }}"
+        owner={{ spark_user }}
+        group={{ spark_user }}
+        mode=0755
+        state=directory
+  with_items:
+    - "{{ spark_jobserver_log_dir }}"
+    - "{{ spark_jobserver_run_dir }}"
+    - "{{ spark_jobserver_usr_parent_dir }}/spark-jobserver-{{ spark_jobserver_version }}"
+
+- name: Spark Jobserver | Download distribution
+  get_url: url="{{ spark_jobserver_mirror }}/spark-jobserver-{{ spark_jobserver_version }}.tar.gz"
+           dest="{{ spark_jobserver_src_dir }}/spark-jobserver-{{ spark_jobserver_version }}.tar.gz"
+
+- name: Spark Jobserver | Extract distribution
+  unarchive: src="{{ spark_jobserver_src_dir }}/spark-jobserver-{{ spark_jobserver_version }}.tar.gz"
+             dest="{{ spark_jobserver_usr_parent_dir }}/spark-jobserver-{{ spark_jobserver_version }}"
+             copy=no
+             creates="{{ spark_jobserver_usr_parent_dir }}/spark-jobserver-{{ spark_jobserver_version }}/spark-job-server.jar"
+
+- name: Spark Jobserver | Setup distribution symlinks
+  file: src="{{ item.src }}"
+        dest="{{ item.dest }}"
+        state=link
+  with_items:
+    - { src: "{{ spark_jobserver_usr_parent_dir }}/spark-jobserver-{{ spark_jobserver_version }}", dest: "{{ spark_jobserver_lib_dir }}" }
+  tags: ["symlinks"]
+
+- name: Spark Jobserver | Setup configuration files
+  template: src=conf/{{ item }}
+            dest="{{ spark_jobserver_lib_dir }}/{{ item }}"
+            mode=0755
+  with_items:
+    - local.conf
+    - settings.sh
+    - shiro.ini
+  tags: ["config"]
+
+- name: Spark Jobserver | Add service scripts
+  template: src="upstart/spark-jobserver.conf"
+            dest="/etc/init/spark-jobserver.conf"
+  tags: ["service"]
+
+- name: Spark Jobserver | Start service
+  service: name=spark-jobserver state=restarted enabled=yes
+  tags: ["service"]
+
+- stat: path=/etc/nginx/sites-enabled
+  register: nginxsitedir
+
+- name: Spark Jobserver | Nginx default site deactivation
+  file: path=/etc/nginx/sites-enabled/default.conf state=absent
+  when: nginxsitedir.stat.exists
+
+- name: Spark Jobserver | Nginx site configuration
+  template: src=nginx/spark-jobserver
+            dest="/etc/nginx/sites-available/spark-jobserver"
+  register: nginxconfig
+  when: nginxsitedir.stat.exists
+
+- name: Spark Jobserver | Nginx site activation
+  file:
+    src: /etc/nginx/sites-available/spark-jobserver
+    dest: /etc/nginx/sites-enabled/spark-jobserver
+    state: link
+    force: yes
+  when: nginxsitedir.stat.exists
+
+- name: Spark Jobserver | Nginx reload
+  service: name=nginx state=reloaded enabled=yes
+  when: nginxsitedir.stat.exists and nginxconfig.changed

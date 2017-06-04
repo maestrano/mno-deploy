@@ -1,0 +1,94 @@
+---
+
+# Spark-Proto Configuration
+#
+# IMPORTANT (TODO: Add to ansible commands)
+# The following commands are also required after running ansible to enable
+# the proxy protocol on the ELB
+# aws elb create-load-balancer-policy --load-balancer-name maestrano-maestrano-sparkpto-elb --policy-name my-ProxyProtocol-policy --policy-type-name ProxyProtocolPolicyType --policy-attributes AttributeName=ProxyProtocol,AttributeValue=true
+# aws elb set-load-balancer-policies-for-backend-server --load-balancer-name maestrano-maestrano-sparkpto-elb --instance-port 80 --policy-names my-ProxyProtocol-policy
+# aws elb set-load-balancer-policies-for-backend-server --load-balancer-name maestrano-maestrano-sparkpto-elb --instance-port 443 --policy-names my-ProxyProtocol-policy
+
+- set_fact: maestrano_component="spark-proto-server-local"
+
+- name: Create Spark-Proto ELB
+  ec2_elb_lb:
+    name: "{{ spark_proto.elastic_load_balancer.name }}"
+    state: present
+    scheme: "{{ spark_proto.elastic_load_balancer.scheme | default('internet-facing')}}"
+    connection_draining_timeout: "{{ spark_proto.elastic_load_balancer.connection_draining_timeout }}"
+    cross_az_load_balancing: "yes"
+    region: "{{ aws_region }}"
+    ec2_access_key: "{{ aws_access_key }}"
+    ec2_secret_key: "{{ aws_secret_key }}"
+    subnets: "{{ spark_proto.elastic_load_balancer.subnets }}"
+    security_group_ids: "{{ spark_proto.elastic_load_balancer.security_group_ids }}"
+    listeners: "{{ spark_proto.elastic_load_balancer.listeners }}"
+    health_check: "{{ spark_proto.elastic_load_balancer.health_check }}"
+  register: spark_proto_elastic_load_balancer
+
+- name: Add DNS record for ELB
+  route53:
+    command: create
+    zone: "{{ (route53.zone.name|string) }}"
+    record: "{{ spark_proto.dns_record.record }}"
+    type: "{{ spark_proto.dns_record.type }}"
+    value: "{{ spark_proto_elastic_load_balancer.elb.dns_name }}"
+    alias: "{{ spark_proto.dns_record.alias }}"
+    ttl: "{{ spark_proto.dns_record.ttl }}"
+    private_zone: "{{ route53.zone.private_zone }}"
+    alias_hosted_zone_id: "{{ spark_proto.elastic_load_balancer.alias_hosted_zone_id }}"
+    overwrite: "{{ spark_proto.dns_record.overwrite }}"
+
+- name: Create Spark-Proto Launch Configuration
+  ec2_lc:
+    name: "{{ spark_proto.launch_configuration.name }}"
+    key_name: "{{ spark_proto.launch_configuration.key_name }}"
+    region: "{{ aws_region }}"
+    ec2_access_key: "{{ aws_access_key }}"
+    ec2_secret_key: "{{ aws_secret_key }}"
+    image_id: "{{ spark_proto.launch_configuration.image_id }}"
+    instance_type: "{{ spark_proto.launch_configuration.instance_type }}"
+    security_groups: "{{ spark_proto.launch_configuration.security_groups }}"
+    user_data: "{{ lookup('template', '../templates/user_data.sh') }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: 50
+        device_type: gp2 # SSD
+        delete_on_termination: true
+  when: spark_proto.launch_configuration.spot_price is undefined or spark_proto.launch_configuration.spot_price is none
+
+- name: Create Spark-Proto Launch Configuration (spot instances)
+  ec2_lc:
+    name: "{{ spark_proto.launch_configuration.name }}"
+    key_name: "{{ spark_proto.launch_configuration.key_name }}"
+    region: "{{ aws_region }}"
+    ec2_access_key: "{{ aws_access_key }}"
+    ec2_secret_key: "{{ aws_secret_key }}"
+    image_id: "{{ spark_proto.launch_configuration.image_id }}"
+    instance_type: "{{ spark_proto.launch_configuration.instance_type }}"
+    spot_price: "{{ spark_proto.launch_configuration.spot_price }}"
+    security_groups: "{{ spark_proto.launch_configuration.security_groups }}"
+    user_data: "{{ lookup('template', '../templates/user_data.sh') }}"
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: 50
+        device_type: gp2 # SSD
+        delete_on_termination: true
+  when: spark_proto.launch_configuration.spot_price is defined and spark_proto.launch_configuration.spot_price is not none
+
+- name: Create Spark-Proto Auto Scaling Group
+  ec2_asg:
+    name: "{{ spark_proto.auto_scaling_group.name }}"
+    region: "{{ aws_region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    launch_config_name: "{{ spark_proto.launch_configuration.name }}"
+    min_size: "{{ spark_proto.auto_scaling_group.min_size }}"
+    max_size: "{{ spark_proto.auto_scaling_group.max_size }}"
+    desired_capacity: "{{ spark_proto.auto_scaling_group.desired_capacity }}"
+    vpc_zone_identifier: "{{ spark_proto.auto_scaling_group.vpc_zone_identifier }}"
+    availability_zones: "{{ spark_proto.auto_scaling_group.availability_zones }}"
+    load_balancers: "{{ spark_proto.elastic_load_balancer.name }}"
+    tags: "{{ spark_proto.auto_scaling_group.tags }}"
+  register: spark_proto_auto_scaling_group

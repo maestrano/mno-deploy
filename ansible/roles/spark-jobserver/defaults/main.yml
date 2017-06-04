@@ -1,0 +1,22 @@
+spark_jobserver_version: "latest"
+spark_jobserver_mirror: "http://cdn.maestrano.com/pkg/spark-jobserver"
+
+spark_jobserver_memory: "1G"
+spark_jobserver_direct_memory: "512M"
+spark_jobserver_usr_parent_dir: "/usr/lib"  #this is the folder where the archives will be extracted
+spark_jobserver_src_dir: "/usr/local/src"
+spark_jobserver_lib_dir: "/var/lib/spark-jobserver"
+spark_jobserver_log_dir: "/var/log/spark-jobserver"
+spark_jobserver_run_dir: "/run/spark-jobserver"
+spark_jobserver_port: 8090
+
+spark_user: "spark"
+spark_version: "1.6.2"
+spark_lib_dir: "/var/lib/spark"
+spark_conf_dir: "/etc/spark"
+
+scala_version: "2.10.4" # or 2.11.6
+
+# List of users with API access
+spark_jobserver_users:
+  root: changeme
