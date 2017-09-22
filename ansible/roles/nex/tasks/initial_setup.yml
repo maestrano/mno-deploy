@@ -53,11 +53,11 @@
 - name: Nex! | Install puma
   command: gem install puma
 
-- include: runtime_deb.yml
-  when: ansible_os_family == "Debian"
+- include: runtime_upstart.yml
+  when: ansible_service_mgr == "upstart"
 
-- include: runtime_rhel.yml
-  when: ansible_os_family == "RedHat"
+- include: runtime_systemd.yml
+  when: ansible_service_mgr == "systemd"
 
 - name: Nex! | Copy puma.rb config
   template: src=puma.rb dest={{deploy_directory}}/shared/config/puma.rb owner=deployer group=deployer mode=0755
