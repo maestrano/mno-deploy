@@ -16,7 +16,7 @@ PIDFile={{ deploy_directory }}/shared/pids/sidekiq.pid
 TimeoutSec=15
 Restart=always
 
-ExecStart=/usr/local/bin/bundle exec sidekiq -c {{ nex_config.sidekiq.worker_threads }} -L {{ deploy_directory }}/shared/log/sidekiq.log
+ExecStart=/usr/local/rvm/gems/ruby-2.3.1/bin/bundle exec sidekiq -c {{ nex_config.sidekiq.worker_threads }} -L {{ deploy_directory }}/shared/log/sidekiq.log
 
 [Install]
 WantedBy=multi-user.target

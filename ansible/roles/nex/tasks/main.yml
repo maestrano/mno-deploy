@@ -29,13 +29,13 @@
   when: infra_ec2_aws_access_key is defined
   tags: [deploy]
 
-- name: Nex! | Run/Reload Puma (Debian)
-  include: runtime_deb.yml
-  when: ansible_os_family == "Debian"
+- name: Nex! | Run/Reload Puma (Upstart)
+  include: runtime_upstart.yml
+  when: ansible_service_mgr == "upstart"
 
-- name: Nex! | Run/Reload Puma (RHEL)
-  include: runtime_rhel.yml
-  when: ansible_os_family == "RedHat"
+- name: Nex! | Run/Reload Puma (Systemd)
+  include: runtime_systemd.yml
+  when: ansible_service_mgr == "systemd"
 
 - name: Nex! | Instance Register
   ec2_elb:
