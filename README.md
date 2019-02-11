@@ -1,6 +1,6 @@
 # Maestrano Infrastructure
 
-[ ![Codeship Status for maestrano/mno-deploy](https://codeship.com/projects/f6587590-e990-0133-f67a-4afac8d396b8/status?branch=master)](https://codeship.com/projects/147638)
+[![CircleCI](https://circleci.com/gh/maestrano/mno-deploy/tree/master.svg?style=svg)](https://circleci.com/gh/maestrano/mno-deploy/tree/master)
 
 The complete Maestrano infrastructure can be deployed on demand on AWS using these deployment scripts. Automation is based on Ansible using a two steps process:
 Creation of the infrastructure on AWS (Virtual Private Cloud, Auto Scaling Groups, Elastic Load Balancers, private DNS entries, etc…)
