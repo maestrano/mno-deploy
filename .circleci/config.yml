@@ -65,6 +65,10 @@ workflows:
       - test:
           context: mnoe-packages
       - package:
+          # Do not package PRs
+          filters:
+            branches:
+              ignore: /^pull\/.*$/
           requires:
             - test
           context: mnoe-packages
