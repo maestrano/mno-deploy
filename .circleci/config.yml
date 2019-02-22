@@ -1,0 +1,74 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: circleci/python:3.6.1
+        environment:
+          - TST_ENABLED: false
+          - TST_BRANCH: master
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - run:
+          name: install ansible
+          command: |
+            sudo pip install -Iv ansible==2.4.3.0
+            sudo pip install boto pycrypto
+            ansible --version
+
+      - run:
+          name: run tests
+          command: |
+            # This export is required for ansible to pickup the right python libraries
+            # such as boto, pycrypto etc.
+            export PYTHONPATH="/home/rof/.virtualenv/lib/python2.7/site-packages"
+            # Run tests
+            bash tests/run.sh
+
+
+  package:
+    docker:
+      - image: circleci/python:3.6.1
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+
+      - run:
+          name: install awscli
+          command: sudo pip install awscli boto boto3 botocore
+
+      - run:
+          name: prepare tarball
+          command: |
+            mkdir -p tmp-pkg
+            cp -rp ansible tmp-pkg/
+            cp -rp scripts tmp-pkg/
+            cd tmp-pkg
+            tar -czf package.tar.gz *
+
+      - run:
+          name: upload tarball to S3
+          command: |
+            aws s3 cp tmp-pkg/package.tar.gz s3://mnoe-packages/mno-infrastructure/${CIRCLE_BRANCH}/${CIRCLE_BUILD_NUM}.tar.gz --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
+            aws s3 cp tmp-pkg/package.tar.gz s3://mnoe-packages/mno-infrastructure/${CIRCLE_BRANCH}/latest.tar.gz --grants read=uri=http://acs.amazonaws.com/groups/global/AllUsers
+
+
+workflows:
+  version: 2
+  build_and_package:
+    jobs:
+      - test:
+          context: mnoe-packages
+      - package:
+          # Do not package PRs
+          filters:
+            branches:
+              ignore: /^pull\/.*$/
+          requires:
+            - test
+          context: mnoe-packages
