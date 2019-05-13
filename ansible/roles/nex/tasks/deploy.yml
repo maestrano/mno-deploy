@@ -12,7 +12,8 @@
     region: "{{ mno_pkgs_s3_aws_region }}"
     aws_access_key: "{{ mno_pkgs_s3_aws_access_key }}"
     aws_secret_key: "{{ mno_pkgs_s3_aws_secret_key }}"
-    use_v4_signature: true
+  environment:
+    S3_USE_SIGV4: True
 
 - name: Nex! | Replace version
   file:
