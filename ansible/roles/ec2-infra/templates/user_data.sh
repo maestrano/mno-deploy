@@ -79,6 +79,7 @@ cd /opt/mno-deploy-configuration
 
 # Download the latest version of the scripts
 KEY=`aws s3 ls s3://${MNO_DEPLOY_BUCKET}${MNO_DEPLOY_PATH}/ --recursive | sort | tail -n 1 | awk '{print $4}'`
+aws configure set s3.signature_version s3v4 # Enable AWS Signature Version 4
 aws s3 cp s3://${MNO_DEPLOY_BUCKET}/$KEY ./mno-deploy-configuration.tar.gz
 
 #====================================================
